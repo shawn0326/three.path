@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>threejs-path</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            font-family: Monospace;
+            background-color: #f0f0f0;
+            margin: 0px;
+            overflow: hidden;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            color: #fff;
+            text-align: center;
+        }
+        a {
+            color: #ff0
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container" ></div>
+    <div id="info">
+        press 'd' to start drawing<br />
+        press left mouse button to draw path<br />
+        right mouse button to stop drawing<br />
+        press 'esc' or middle mouse button to clear path
+    </div>
+</body>
+
+<script src="js/three.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/LineMaterial.js"></script>
+<script src="js/dat.gui.min.js"></script>
+
+<script src="src/PathGeometry.js"></script>
+<script src="src/Path3D.js"></script>
+
+<script src="js/main.js"></script>
+
+</html>
