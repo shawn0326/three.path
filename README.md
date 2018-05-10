@@ -16,7 +16,7 @@ var geometry = new THREE.PathGeometry();
 path3D.start(); 
 
 // when mouse moving
-path3D.updateLastPoint(mouse.x, mouse.y); 
+path3D.update(mouse.x, mouse.y); 
 
 // when drawing a point
 path3D.confirm(); 
@@ -24,11 +24,13 @@ path3D.confirm();
 // when finish a path
 path3D.stop(); 
 
+// clear path
+// path3D.clear(); 
+
 // update geometry when path3D changed
-geometry.update(path3D.getPoints(), {
+geometry.update(path3D.getPathPointList(), {
     width: 0.3,
-    uvOffset: 0,
-    cornerRadius: 0.1
+    uvOffset: 0
 }); 
 
 // or just update uv

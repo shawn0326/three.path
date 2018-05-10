@@ -14,7 +14,40 @@
 
         this.fixRadius = 0.5;
         this.height = 0.1;
+
+        this._cornerRadius = 0.2;
+        this._cornerSplit = 10;
+
+        this._pathPointList = new THREE.PathPointList();
+
+        this._dirty = true;
     }
+
+    Object.defineProperty( THREE.Path3D.prototype, "cornerRadius", {
+
+        set: function ( value ) {
+            this._cornerRadius = value;
+            this._dirty = true;
+        },
+
+        get: function() {
+            return this._cornerRadius;
+        }
+    
+    } );
+
+    Object.defineProperty( THREE.Path3D.prototype, "cornerSplit", {
+
+        set: function ( value ) {
+            this._cornerSplit = value;
+            this._dirty = true;
+        },
+
+        get: function() {
+            return this._cornerSplit;
+        }
+    
+    } );
     
     THREE.Path3D.prototype.getPoints = function() {
     
@@ -35,8 +68,17 @@
         return this._points;
     
     }
+
+    THREE.Path3D.prototype.getPathPointList = function() {
+        if(this._drawing || this._dirty) {
+            this._pathPointList.set(this.getPoints(), this._cornerRadius, this._cornerSplit);
+            this._dirty = false;
+        }
+
+        return this._pathPointList;
+    }
     
-    THREE.Path3D.prototype.updateLastPoint = function(point) {
+    THREE.Path3D.prototype.update = function(point) {
         this._lastPoint.copy(point);
         this._lastPoint.y += this.height;
     }
@@ -54,14 +96,20 @@
 
             this._points.push(fixedPoint.clone());
         }
+
+        this._dirty = true;
     }
 
     THREE.Path3D.prototype.start = function() {
         this._drawing = true;
+
+        this._dirty = true;
     }
     
     THREE.Path3D.prototype.stop = function() {
         this._drawing = false;
+
+        this._dirty = true;
     }
     
     THREE.Path3D.prototype.clear = function() {
@@ -69,6 +117,8 @@
         this._includeDrawingPoint = false;
     
         this._points = [];
+
+        this._dirty = true;
     }
 
     var measureVec3 = new THREE.Vector3();

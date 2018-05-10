@@ -68,7 +68,7 @@ window.onload = function() {
     line.drawMode = THREE.TriangleStripDrawMode;
     scene.add(line);
 
-    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, cornerRadius: 0.2, progress: 1, playSpeed: 0.005};
+    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};
     var gui = new dat.GUI();
 
     gui.add( params, 'useTexture').onChange(function(val) {
@@ -84,28 +84,33 @@ window.onload = function() {
     gui.add( params, 'scrollUV');
     gui.add( params, 'scrollSpeed').min(-0.1).max(0.1);
     gui.add( params, 'width').min(-0.1).max(1).onChange(function() {
-        geometry.update(path3D.getPoints(), {
+        geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            // uvOffset: params.scrollUV ? scrollingY : 0,
-            cornerRadius: params.cornerRadius
+            // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
     gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
-        geometry.update(path3D.getPoints(), {
+        geometry.update(path3D.getPathPointList(), {
             width: params.width,
             progress: params.progress,
-            // uvOffset: params.scrollUV ? scrollingY : 0,
-            cornerRadius: params.cornerRadius
+            // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
-    gui.add( params, 'playSpeed').min(0.001).max(0.01);
-    // gui.add( params, 'cornerRadius').min(0.1).max(1).onChange(function() {
-    //     geometry.update(path3D.getPoints(), {
-    //         width: params.width,
-    //         // uvOffset: params.scrollUV ? scrollingY : 0,
-    //         cornerRadius: params.cornerRadius
-    //     });
-    // });
+    gui.add( params, 'playSpeed').min(0.01).max(0.2);
+    gui.add( params, 'cornerRadius').min(0).max(1).onChange(function(val) {
+        path3D.cornerRadius = val;
+        geometry.update(path3D.getPathPointList(), {
+            width: params.width,
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
+    gui.add( params, 'cornerSplit').min(0).max(30).step(1).onChange(function(val) {
+        path3D.cornerSplit = val;
+        geometry.update(path3D.getPathPointList(), {
+            width: params.width,
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
     // gui.open();
 
     var scrollingY = 0;
@@ -119,23 +124,29 @@ window.onload = function() {
 
         if(drawing) {
             scrollingY += params.scrollSpeed;
-            geometry.update(path3D.getPoints(), {
+            geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                uvOffset: params.scrollUV ? scrollingY : 0,
-                cornerRadius: params.cornerRadius
+                uvOffset: params.scrollUV ? scrollingY : 0
             });
         } else {
             if(playing) {
-                params.progress += params.playSpeed;
-                if(params.progress >= 1) {
+                var pathPointList = path3D.getPathPointList();
+                var distance = pathPointList.distance();
+
+                if(distance > 0) {
+                    params.progress += params.playSpeed / distance;
+                    if(params.progress >= 1) {
+                        params.progress = 1;
+                        playing = false;
+                    }
+                } else {
                     params.progress = 1;
                     playing = false;
                 }
 
-                geometry.update(path3D.getPoints(), {
+                geometry.update(pathPointList, {
                     width: params.width,
                     uvOffset: params.scrollUV ? scrollingY : 0,
-                    cornerRadius: params.cornerRadius,
                     progress: params.progress
                 });
             } else {
@@ -159,7 +170,7 @@ window.onload = function() {
         if('Escape' == keyName ) {
             if(!playing) {
                 path3D.clear();
-                geometry.update([]);
+                geometry.update(path3D.getPathPointList());
                 drawing = false;
             } else {
                 console.warn('clear after playing finished');
@@ -199,17 +210,16 @@ window.onload = function() {
         } else if(event.button == 1) {
 
             path3D.clear();
-            geometry.update([]);
+            geometry.update(path3D.getPathPointList());
             drawing = false;
 
         } else if(event.button == 2) {
 
             drawing = false;
             path3D.stop();
-            geometry.update(path3D.getPoints(), {
+            geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                // uvOffset: time / 1000,
-                cornerRadius: params.cornerRadius
+                // uvOffset: time / 1000
             });
 
         }
@@ -228,7 +238,7 @@ window.onload = function() {
         // Toggle rotation bool for meshes that we clicked
         if ( intersects.length > 0 ) {
 
-            path3D.updateLastPoint(intersects[ 0 ].point);
+            path3D.update(intersects[ 0 ].point);
 
         }
     }

@@ -13,8 +13,6 @@
 
         this.drawRange.start = 0;
         this.drawRange.count = 0;
-
-        this._pathPointList = new PathPointList();
     }
 
     THREE.PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prototype ), {
@@ -23,25 +21,18 @@
 
         /**
          * update uv
-         * @param {THREE.Vector3[]} points
+         * @param {THREE.PathPointList} pathPointList
          * @param {Object} options
          */
-        update: function(points, options) {
-            var pointsLength = points.length;
-
-            if(pointsLength < 2) {
-                this.drawRange.count = 0;
-                return;
-            }
-
-            if(this._needLargerBufferSize(points.length)) {
+        update: function(pathPointList, options) {
+            if(this._needLargerBufferSize(pathPointList.count)) {
                 this._maxVertex *= 2;
                 this._resizeAttributes();
             }
 
             // update attributes
             options = options || {};
-            var count = this._updateAttributes(points, options);
+            var count = this._updateAttributes(pathPointList, options);
 
             this.drawRange.count = count;
         },
@@ -77,15 +68,13 @@
             this.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( this._maxVertex * 2 ), 2 ).setDynamic( true ) );
         },
 
-        _updateAttributes: function(points, options) {
+        _updateAttributes: function(pathPointList, options) {
             var positionAttribute = this.getAttribute( 'position' );
             var normalAttribute = this.getAttribute( 'normal' );
             var uvAttribute = this.getAttribute( 'uv' );
 
             var width = options.width || 0.1;
             var uvOffset = options.uvOffset || 0;
-            var cornerRadius = options.cornerRadius || 0;
-            var cornerSplit = options.cornerSplit || 20;
             var progress = options.progress !== undefined ? options.progress : 1;
 
             var count = 0;
@@ -157,31 +146,25 @@
                 count += 3;
             }
 
-            // build path point list
-            for(var i = 0, l = points.length; i < l; i++) {
-                if(i === 0) {
-                    this._pathPointList.start(points[i], points[i + 1]);
-                } else if(i === l - 1) {
-                    this._pathPointList.end(points[i]);
-                } else {
-                    this._pathPointList.corner(points[i], points[i + 1], cornerRadius, cornerSplit);
-                }
-            }
-
             // build path geometry
-            var totalDistance = this._pathPointList.array[this._pathPointList.count - 1].dist;
+            var totalDistance = pathPointList.distance();
+
+            if(totalDistance == 0) {
+                return 0;
+            }
+            
             var progressDistance = progress * totalDistance;
             var lastPoint;
 
             if(progressDistance > 0) {
-                for(var i = 0; i < this._pathPointList.count; i++) {
-                    var pathPoint = this._pathPointList.array[i];
+                for(var i = 0; i < pathPointList.count; i++) {
+                    var pathPoint = pathPointList.array[i];
     
                     if(pathPoint.dist > progressDistance) {
-                        var prevPoint =  this._pathPointList.array[i - 1];
-                        lastPoint = new PathPoint();
+                        var prevPoint =  pathPointList.array[i - 1];
+                        lastPoint = new THREE.PathPoint();
     
-                        // linear lerp
+                        // linear lerp for progress
                         var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                         lastPoint.pos.lerpVectors(prevPoint.pos, pathPoint.pos, alpha);
                         lastPoint.dir.lerpVectors(prevPoint.dir, pathPoint.dir, alpha);
@@ -197,11 +180,11 @@
                     
                 }
             } else {
-                lastPoint = this._pathPointList.array[0];
+                lastPoint = pathPointList.array[0];
             }
 
             // build arrow geometry
-            lastPoint = lastPoint || this._pathPointList.array[this._pathPointList.count - 1];
+            lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
             addStart(lastPoint.pos, lastPoint.dir, lastPoint.up, width / 2, lastPoint.dist / width - uvOffset);
 
             positionAttribute.array.set(position, 0);
@@ -220,130 +203,5 @@
         }
 
     });
-
-    var PathPoint = function() {
-
-        this.pos = new THREE.Vector3();
-
-        this.dir = new THREE.Vector3();
-
-        this.up = new THREE.Vector3(); // normal
-
-        this.dist = 0; // distance from start
-
-        this.widthScale = 1;
-
-    }
-
-    var PathPointList = function() {
-        this.array = []; // path point array
-        this.count = 0;
-
-        this.up = new THREE.Vector3(0, 1, 0);
-    }
-
-    PathPointList.prototype.start = function(current, next) {
-
-        this.count = 0;
-
-        var point = this._getByIndex( this.count );
-
-        point.pos.copy(current);
-        point.dir.subVectors( next, current );
-        point.up.copy(this.up);
-        point.dist = 0;
-        point.widthScale = 1;
-
-        point.dir.normalize();
-
-        this.count++;
-        
-    }
-
-    var helpVec3_1 = new THREE.Vector3();
-    var helpVec3_2 = new THREE.Vector3();
-    var helpVec3_3 = new THREE.Vector3();
-    var helpCurve = new THREE.QuadraticBezierCurve3();
-
-    PathPointList.prototype.corner = function(current, next, cornerRadius, cornerSplit) {
-
-        if(cornerRadius > 0) {
-            var lastPoint = this.array[this.count - 1];
-            var curve = this._getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, helpCurve);
-            var samplerPoints = curve.getPoints(cornerSplit);
-
-            for(var f = 0; f < cornerSplit; f += 1) {
-                this.hardCorner(samplerPoints[f], samplerPoints[f + 1]);
-            }
-
-            this.hardCorner(samplerPoints[cornerSplit], next);
-        } else {
-            this.hardCorner(current, next);
-        }
-
-    }
-
-    PathPointList.prototype.hardCorner = function(current, next) {
-        var lastPoint = this.array[this.count - 1];
-        var point = this._getByIndex(this.count);
-
-        var lastDir = helpVec3_1.subVectors(current, lastPoint.pos);
-        var nextDir = helpVec3_2.subVectors(next, current);
-
-        point.pos.copy(current);
-        point.dir.addVectors( lastDir, nextDir );
-        point.up.copy(this.up);
-        point.dist = lastPoint.dist + lastDir.length();
-
-        var _cos = lastDir.normalize().dot( nextDir.normalize() );
-        point.widthScale = 1 / Math.sqrt( (1 + _cos) / 2 );
-
-        // if(point.widthScale > 1.414213562373) {
-        //     var offsetDist = (point.widthScale - 1.414213562373) / 2;
-        //     var offset = helpVec3_3.copy(lastDir).multiplyScalar( -1 ).add( nextDir ).normalize().multiplyScalar( offsetDist );
-        //     point.pos.add(offset);
-        // }
-
-        point.dir.normalize();
-
-        this.count++;
-    }
-
-    PathPointList.prototype.end = function(current) {
-        var lastPoint = this.array[this.count - 1];
-        var point = this._getByIndex(this.count);
-
-        point.pos.copy(current);
-        point.dir.subVectors( current, lastPoint.pos );
-        point.up.copy(this.up);
-        point.dist = lastPoint.dist + point.dir.length();
-        point.widthScale = 1;
-
-        point.dir.normalize();
-
-        this.count++;
-    }
-
-    PathPointList.prototype._getByIndex = function(index) {
-        if(!this.array[index]) {
-            this.array[index] = new PathPoint();
-        }
-        return this.array[index];
-    }
-
-    PathPointList.prototype._getCornerBezierCurve = function(last, current, next, cornerRadius, out) {
-
-        var lastDir = helpVec3_1.subVectors(current, last);
-        var nextDir = helpVec3_2.subVectors(next, current);
-
-        lastDir.normalize();
-        nextDir.normalize();
-
-        out.v0.copy(current).sub(lastDir.multiplyScalar(cornerRadius));
-        out.v1.copy(current);
-        out.v2.copy(current).add(nextDir.multiplyScalar(cornerRadius));
-
-        return out;
-
-    }
+    
 })();
