@@ -68,7 +68,7 @@ window.onload = function() {
     line.drawMode = THREE.TriangleStripDrawMode;
     scene.add(line);
 
-    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, cornerRadius: 0.2};
+    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, cornerRadius: 0.2, progress: 1, playSpeed: 0.005};
     var gui = new dat.GUI();
 
     gui.add( params, 'useTexture').onChange(function(val) {
@@ -90,6 +90,15 @@ window.onload = function() {
             cornerRadius: params.cornerRadius
         });
     });
+    gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
+        geometry.update(path3D.getPoints(), {
+            width: params.width,
+            progress: params.progress,
+            // uvOffset: params.scrollUV ? scrollingY : 0,
+            cornerRadius: params.cornerRadius
+        });
+    });
+    gui.add( params, 'playSpeed').min(0.001).max(0.01);
     // gui.add( params, 'cornerRadius').min(0.1).max(1).onChange(function() {
     //     geometry.update(path3D.getPoints(), {
     //         width: params.width,
@@ -116,8 +125,23 @@ window.onload = function() {
                 cornerRadius: params.cornerRadius
             });
         } else {
-            if(params.scrollUV) {
-                geometry.updateUVScroll(0, -params.scrollSpeed);
+            if(playing) {
+                params.progress += params.playSpeed;
+                if(params.progress >= 1) {
+                    params.progress = 1;
+                    playing = false;
+                }
+
+                geometry.update(path3D.getPoints(), {
+                    width: params.width,
+                    uvOffset: params.scrollUV ? scrollingY : 0,
+                    cornerRadius: params.cornerRadius,
+                    progress: params.progress
+                });
+            } else {
+                if(params.scrollUV) {
+                    geometry.updateUVScroll(0, -params.scrollSpeed);
+                }
             }
         }
     
@@ -128,16 +152,28 @@ window.onload = function() {
     render();
 
     var drawing = false;
+    var playing = true; // animation playing
 
     document.addEventListener('keydown', (event) => {
         var keyName = event.key;
         if('Escape' == keyName ) {
-            path3D.clear();
-            geometry.update([]);
-            drawing = false;
+            if(!playing) {
+                path3D.clear();
+                geometry.update([]);
+                drawing = false;
+            } else {
+                console.warn('clear after playing finished');
+            }
         } else if('d' == keyName) {
             drawing = true;
             path3D.start();
+        } else if('p' == keyName) {
+            if(!drawing) {
+                playing = true;
+                params.progress = 0;
+            } else {
+                console.warn('play after drawing finished');
+            }
         }
     });
 
