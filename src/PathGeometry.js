@@ -2,14 +2,17 @@
 
     /**
      * THREE.PathGeometry 
+     * need drawtype THREE.TriangleStripDrawMode
      */
 
-    THREE.PathGeometry = function() {
+    THREE.PathGeometry = function(maxVertex) {
         THREE.BufferGeometry.call( this );
 
-        this._maxVertex = 3000;
+        maxVertex = maxVertex || 3000;
 
-        this._resizeAttributes();
+        this.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
+        this.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
+        this.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( maxVertex * 2 ), 2 ).setDynamic( true ) );
 
         this.drawRange.start = 0;
         this.drawRange.count = 0;
@@ -25,11 +28,6 @@
          * @param {Object} options
          */
         update: function(pathPointList, options) {
-            if(this._needLargerBufferSize(pathPointList.count)) {
-                this._maxVertex *= 2;
-                this._resizeAttributes();
-            }
-
             // update attributes
             options = options || {};
             var count = this._updateAttributes(pathPointList, options);
@@ -54,18 +52,11 @@
             }
         },
 
-        _needLargerBufferSize: function(len) {
-            return len * 2 > this._maxVertex;
-        },
-
-        _resizeAttributes: function() {
-            this.removeAttribute( 'position' );
-            this.removeAttribute( 'normal' );
-            this.removeAttribute( 'uv' );
-
-            this.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( this._maxVertex * 3 ), 3 ).setDynamic( true ) );
-            this.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( this._maxVertex * 3 ), 3 ).setDynamic( true ) );
-            this.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( this._maxVertex * 2 ), 2 ).setDynamic( true ) );
+        _resizeAttribute: function(attribute, len) {
+            while(attribute.array.length < len) {
+                var oldLength = attribute.array.length;
+                attribute.setArray(new Float32Array( oldLength * 2 ));
+            }
         },
 
         _updateAttributes: function(pathPointList, options) {
@@ -86,14 +77,16 @@
 
             var right = new THREE.Vector3();
             var left = new THREE.Vector3();
-            function addVertices(point, dir, up, halfWidth, uvDist) {
-                right.crossVectors( dir, up ).setLength(halfWidth);
-                left.copy( right ).multiplyScalar( -1 ).setLength(halfWidth);
+            function addVertices(pathPoint, halfWidth, uvDist) {
+                var dir = pathPoint.dir;
+                var up = pathPoint.up;
+                var _right = pathPoint.right;
 
-                // TODO re calculate up dir
+                right.copy(_right).multiplyScalar(halfWidth);
+                left.copy(_right).multiplyScalar(-halfWidth);
 
-                right.add(point);
-                left.add(point);
+                right.add(pathPoint.pos);
+                left.add(pathPoint.pos);
 
                 position.push(
                     left.x, left.y, left.z,
@@ -114,16 +107,20 @@
             }
 
             var sharp = new THREE.Vector3();
-            function addStart(point, dir, up, halfWidth, uvDist) {
-                right.crossVectors( dir, up ).setLength(halfWidth * 2);
-                left.copy( right ).multiplyScalar( -1 ).setLength(halfWidth * 2);
+            function addStart(pathPoint, halfWidth, uvDist) {
+                var dir = pathPoint.dir;
+                var up = pathPoint.up;
+                var _right = pathPoint.right;
+
+                right.copy(_right).multiplyScalar(halfWidth * 2);
+                left.copy(_right).multiplyScalar(-halfWidth * 2);
                 sharp.copy(dir).setLength(halfWidth * 3);
 
                 // TODO calculate up dir
 
-                right.add(point);
-                left.add(point);
-                sharp.add(point);
+                right.add(pathPoint.pos);
+                left.add(pathPoint.pos);
+                sharp.add(pathPoint.pos);
 
                 position.push(
                     left.x, left.y, left.z,
@@ -166,16 +163,12 @@
     
                         // linear lerp for progress
                         var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
-                        lastPoint.pos.lerpVectors(prevPoint.pos, pathPoint.pos, alpha);
-                        lastPoint.dir.lerpVectors(prevPoint.dir, pathPoint.dir, alpha);
-                        lastPoint.up.lerpVectors(prevPoint.up, pathPoint.up, alpha);
-                        lastPoint.dist = progressDistance;
-                        lastPoint.widthScale = 1;
+                        lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
     
-                        addVertices(lastPoint.pos, lastPoint.dir, lastPoint.up, width / 2, lastPoint.dist / width - uvOffset);
+                        addVertices(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
                         break;
                     } else {
-                        addVertices(pathPoint.pos, pathPoint.dir, pathPoint.up, width / 2, pathPoint.dist / width - uvOffset);
+                        addVertices(pathPoint, width / 2, pathPoint.dist / width - uvOffset);
                     }
                     
                 }
@@ -185,7 +178,11 @@
 
             // build arrow geometry
             lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-            addStart(lastPoint.pos, lastPoint.dir, lastPoint.up, width / 2, lastPoint.dist / width - uvOffset);
+            addStart(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
+
+            this._resizeAttribute(positionAttribute, position.length);
+            this._resizeAttribute(normalAttribute, normal.length);
+            this._resizeAttribute(uvAttribute, uv.length);
 
             positionAttribute.array.set(position, 0);
             normalAttribute.array.set(normal, 0);
