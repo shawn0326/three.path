@@ -40,7 +40,7 @@
          * @param {number} offsetX uv offset x
          * @param {number} offsetY uv offset y
          */
-        updateUVScroll(offsetX, offsetY) {
+        updateUVScroll: function(offsetX, offsetY) {
             if(this.drawRange.count > 0) {
                 var uvAttribute = this.getAttribute( 'uv' );
                 for(var i = 0, l = uvAttribute.array.length; i < l; i += 2) {
@@ -137,7 +137,7 @@
                 uv.push(
                     -0.5, uvDist,
                     1.5, uvDist,
-                    0.5, uvDist + (halfWidth * 3 / (halfWidth * 2) ),
+                    0.5, uvDist + (halfWidth * 3 / (halfWidth * 2) )
                 );
 
                 count += 3;
