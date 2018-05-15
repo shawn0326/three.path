@@ -114,9 +114,9 @@
             var uvAttribute = this.getAttribute( 'uv' );
             var indexAttribute = this.getIndex();
 
-            this._resizeAttribute(positionAttribute, position.length);
-            this._resizeAttribute(normalAttribute, normal.length);
-            this._resizeAttribute(uvAttribute, uv.length);
+            this._resizeAttribute('position', positionAttribute, position.length);
+            this._resizeAttribute('normal', normalAttribute, normal.length);
+            this._resizeAttribute('uv', uvAttribute, uv.length);
             this._resizeIndex(indexAttribute, indices.length);
 
             positionAttribute = this.getAttribute( 'position' );
