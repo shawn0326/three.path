@@ -23,7 +23,7 @@ window.onload = function() {
     // random vector3 points
     var points = [new THREE.Vector3()];
     var oldType = 2;
-    for(var i = 0; i < 200; i++) {
+    for(var i = 0; i < 20500; i++) {
         var old = points[points.length - 1];
         var type = Math.floor(Math.random() * 100) % 3;
         while(oldType == type) {

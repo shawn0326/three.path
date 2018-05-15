@@ -17,16 +17,12 @@
         _resizeIndex: function(index, len) {
             while(index.array.length < len) {
                 var oldLength = index.array.length;
-                index.setArray(oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ));
+                index = index.clone().setArray(oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ));
+                this.setIndex(index);
             }
         },
 
         _updateAttributes: function(pathPointList, options) {
-            var positionAttribute = this.getAttribute( 'position' );
-            var normalAttribute = this.getAttribute( 'normal' );
-            var uvAttribute = this.getAttribute( 'uv' );
-            var indexAttribute = this.getIndex();
-
             var radius = options.radius || 0.1;
             var radialSegments = options.radialSegments || 8;
             radialSegments = Math.max(2, radialSegments);
@@ -113,10 +109,20 @@
                 }
             }
 
+            var positionAttribute = this.getAttribute( 'position' );
+            var normalAttribute = this.getAttribute( 'normal' );
+            var uvAttribute = this.getAttribute( 'uv' );
+            var indexAttribute = this.getIndex();
+
             this._resizeAttribute(positionAttribute, position.length);
             this._resizeAttribute(normalAttribute, normal.length);
             this._resizeAttribute(uvAttribute, uv.length);
             this._resizeIndex(indexAttribute, indices.length);
+
+            positionAttribute = this.getAttribute( 'position' );
+            normalAttribute = this.getAttribute( 'normal' );
+            uvAttribute = this.getAttribute( 'uv' );
+            indexAttribute = this.getIndex();
 
             positionAttribute.array.set(position, 0);
             normalAttribute.array.set(normal, 0);

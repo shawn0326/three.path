@@ -52,18 +52,15 @@
             }
         },
 
-        _resizeAttribute: function(attribute, len) {
+        _resizeAttribute: function(name, attribute, len) {
             while(attribute.array.length < len) {
                 var oldLength = attribute.array.length;
-                attribute.setArray(new Float32Array( oldLength * 2 ));
+                attribute = attribute.clone().setArray(new Float32Array( oldLength * 2 ));
+                this.addAttribute(name, attribute);console.log(1)
             }
         },
 
         _updateAttributes: function(pathPointList, options) {
-            var positionAttribute = this.getAttribute( 'position' );
-            var normalAttribute = this.getAttribute( 'normal' );
-            var uvAttribute = this.getAttribute( 'uv' );
-
             var width = options.width || 0.1;
             var uvOffset = options.uvOffset || 0;
             var progress = options.progress !== undefined ? options.progress : 1;
@@ -180,9 +177,17 @@
             lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
             addStart(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
 
-            this._resizeAttribute(positionAttribute, position.length);
-            this._resizeAttribute(normalAttribute, normal.length);
-            this._resizeAttribute(uvAttribute, uv.length);
+            var positionAttribute = this.getAttribute( 'position' );
+            var normalAttribute = this.getAttribute( 'normal' );
+            var uvAttribute = this.getAttribute( 'uv' );
+
+            this._resizeAttribute('position', positionAttribute, position.length);
+            this._resizeAttribute('normal', normalAttribute, normal.length);
+            this._resizeAttribute('uv', uvAttribute, uv.length);
+
+            positionAttribute = this.getAttribute( 'position' );
+            normalAttribute = this.getAttribute( 'normal' );
+            uvAttribute = this.getAttribute( 'uv' );
 
             positionAttribute.array.set(position, 0);
             normalAttribute.array.set(normal, 0);
