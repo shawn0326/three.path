@@ -28,7 +28,7 @@
             var indexAttribute = this.getIndex();
 
             var radius = options.radius || 0.1;
-            var radialSegments = options.radialSegments || 10;
+            var radialSegments = options.radialSegments || 8;
             radialSegments = Math.max(2, radialSegments);
             var uvOffset = options.uvOffset || 0;
             var progress = options.progress !== undefined ? options.progress : 1;

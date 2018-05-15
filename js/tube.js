@@ -23,7 +23,7 @@ window.onload = function() {
     // random vector3 points
     var points = [new THREE.Vector3()];
     var oldType = 2;
-    for(var i = 0; i < 100; i++) {
+    for(var i = 0; i < 200; i++) {
         var old = points[points.length - 1];
         var type = Math.floor(Math.random() * 100) % 3;
         while(oldType == type) {
@@ -66,7 +66,7 @@ window.onload = function() {
     var tube = new THREE.Mesh(geometry, material);
     scene.add(tube);
 
-    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, radius: 0.2, cornerRadius: 0.3, cornerSplit: 10, progress: 1, playSpeed: 0.14};
+    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, radius: 0.2, radialSegments: 8, cornerRadius: 0.3, cornerSplit: 10, progress: 1, playSpeed: 0.14};
     var gui = new dat.GUI();
 
     gui.add( params, 'useTexture').onChange(function(val) {
@@ -84,12 +84,21 @@ window.onload = function() {
     gui.add( params, 'radius').min(0.1).max(1).onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
+            radialSegments: params.radialSegments
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
+    gui.add( params, 'radialSegments').min(2).max(10).step(1).onChange(function() {
+        geometry.update(pathPointList, {
+            radius: params.radius,
+            radialSegments: params.radialSegments
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
     gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
+            radialSegments: params.radialSegments,
             progress: params.progress,
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
@@ -99,6 +108,7 @@ window.onload = function() {
         pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
         geometry.update(pathPointList, {
             radius: params.radius,
+            radialSegments: params.radialSegments
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -106,6 +116,7 @@ window.onload = function() {
         pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
         geometry.update(pathPointList, {
             radius: params.radius,
+            radialSegments: params.radialSegments
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -135,6 +146,7 @@ window.onload = function() {
             
             geometry.update(pathPointList, {
                 radius: params.radius,
+                radialSegments: params.radialSegments,
                 uvOffset: params.scrollUV ? scroll : 0,
                 progress: params.progress
             });
