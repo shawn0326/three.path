@@ -17,7 +17,8 @@
         _resizeIndex: function(index, len) {
             while(index.array.length < len) {
                 var oldLength = index.array.length;
-                index = index.clone().setArray(oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ));
+                index = index.clone();
+                index.setArray(oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ));
                 this.setIndex(index);
             }
         },
