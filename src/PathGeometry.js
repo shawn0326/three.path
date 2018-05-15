@@ -55,8 +55,9 @@
         _resizeAttribute: function(name, attribute, len) {
             while(attribute.array.length < len) {
                 var oldLength = attribute.array.length;
-                attribute = attribute.clone().setArray(new Float32Array( oldLength * 2 ));
-                this.addAttribute(name, attribute);console.log(1)
+                attribute = attribute.clone();
+                attribute.setArray(new Float32Array( oldLength * 2 ));
+                this.addAttribute(name, attribute);
             }
         },
 
