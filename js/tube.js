@@ -3,7 +3,7 @@ window.onload = function() {
     var scene = new THREE.Scene();
     scene.background = new THREE.Color(0.3, 0.3, 0.3);
     var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 1000 );
-    camera.position.set( 0, 40, 40 );
+    camera.position.set( 0, 20, 20 );
 
     var renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true });
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -20,6 +20,7 @@ window.onload = function() {
     directionalLight.position.normalize();
     scene.add( directionalLight );
 
+    // random vector3 points
     var points = [new THREE.Vector3()];
     var oldType = 2;
     for(var i = 0; i < 100; i++) {
@@ -29,7 +30,7 @@ window.onload = function() {
             type = Math.floor(Math.random() * 100) % 3;
         }
         oldType = type;
-        var offset = (Math.random() * 3 + 1) * (Math.random() > 0.5 ? 1 : -1);
+        var offset = (Math.random() * 2 + 1) * (Math.random() > 0.5 ? 1 : -1);
         points.push(new THREE.Vector3(
             type === 0 ? (old.x + offset) : old.x,
             type === 1 ? (old.y + offset) : old.y,
@@ -37,8 +38,11 @@ window.onload = function() {
         ));
     }
 
+    // create PathPointList
     var pathPointList = new THREE.PathPointList();
-    pathPointList.set(points, 0.1, 10, false);
+    pathPointList.set(points, 0.3, 10, false);
+
+    // create geometry
     var radius = 0.2;
     var geometry = new THREE.PathTubeGeometry();
     geometry.update(pathPointList, {
@@ -54,7 +58,7 @@ window.onload = function() {
         color : 0x58DEDE, 
         depthWrite: true,
         transparent: true,
-        opacity: 1,
+        opacity: 0.9,
         side: THREE.DoubleSide
     });
     material.map = texture;
@@ -62,32 +66,106 @@ window.onload = function() {
     var tube = new THREE.Mesh(geometry, material);
     scene.add(tube);
 
+    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, radius: 0.2, cornerRadius: 0.3, cornerSplit: 10, progress: 1, playSpeed: 0.14};
+    var gui = new dat.GUI();
+
+    gui.add( params, 'useTexture').onChange(function(val) {
+        material.map = val ? texture : null;
+        material.needsUpdate = true;
+    });
+    gui.addColor(params, "color").onChange(function(value) {
+        material.color.r = value[0] / 255;
+        material.color.g = value[1] / 255;
+        material.color.b = value[2] / 255;
+    });
+    gui.add( material, 'opacity').min(0).max(1);
+    gui.add( params, 'scrollUV');
+    gui.add( params, 'scrollSpeed').min(-0.1).max(0.1);
+    gui.add( params, 'radius').min(0.1).max(1).onChange(function() {
+        geometry.update(pathPointList, {
+            radius: params.radius,
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
+    gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
+        geometry.update(pathPointList, {
+            radius: params.radius,
+            progress: params.progress,
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
+    gui.add( params, 'playSpeed').min(0.01).max(0.2);
+    gui.add( params, 'cornerRadius').min(0).max(1).onChange(function(val) {
+        pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
+        geometry.update(pathPointList, {
+            radius: params.radius,
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
+    gui.add( params, 'cornerSplit').min(0).max(30).step(1).onChange(function(val) {
+        pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
+        geometry.update(pathPointList, {
+            radius: params.radius,
+            // uvOffset: params.scrollUV ? scrollingY : 0
+        });
+    });
+
     var scroll = 0;
-    var progress = 0;
+    var playing = false;
 
     function render(time) {
 
         requestAnimationFrame( render );
         controls.update();
 
-        scroll += 0.01;
-        geometry.update(pathPointList, {
-            radius: radius,
-            uvOffset: scroll
-        });
+        // progress
+        if(playing) {
+            var distance = pathPointList.distance();
 
-        progress += 0.001;
-        if(progress > 1) progress = 0;
-        geometry.update(pathPointList, {
-            radius: radius,
-            progress: progress
-        });
-    
+            if(distance > 0) {
+                params.progress += params.playSpeed / distance;
+                if(params.progress > 1) {
+                    playing = false;
+                    params.progress = 1;
+                }
+            } else {
+                playing = false;
+                params.progress = 1;
+            }
+            
+            geometry.update(pathPointList, {
+                radius: params.radius,
+                uvOffset: params.scrollUV ? scroll : 0,
+                progress: params.progress
+            });
+        } else {
+            // scroll
+            scroll += params.scrollSpeed;
+
+            // geometry.update(pathPointList, {
+            //     radius: radius,
+            //     uvOffset: params.scrollUV ? scroll : 0
+            // });
+
+            if(params.scrollUV) {
+                geometry.updateUVScroll(0, params.scrollSpeed);
+            }
+        }
+        
         renderer.render( scene, camera );
     
     }
 
     render();
 
+    document.addEventListener('keydown', (event) => {
+        var keyName = event.key;
+        if('Escape' == keyName ) {
+            
+        } else if('p' == keyName) {
+            playing = true;
+            params.progress = 0;
+        }
+    });
 };
 

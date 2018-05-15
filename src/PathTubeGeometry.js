@@ -28,7 +28,7 @@
             var indexAttribute = this.getIndex();
 
             var radius = options.radius || 0.1;
-            var radialSegments = options.radialSegments || 20;
+            var radialSegments = options.radialSegments || 10;
             radialSegments = Math.max(2, radialSegments);
             var uvOffset = options.uvOffset || 0;
             var progress = options.progress !== undefined ? options.progress : 1;
@@ -53,7 +53,7 @@
                     }
                     normalDir.copy(pathPoint.up).applyAxisAngle(pathPoint.dir, Math.PI * 2 * _r / radialSegments).normalize();
 
-                    position.push(pathPoint.pos.x + normalDir.x * radius, pathPoint.pos.y + normalDir.y * radius, pathPoint.pos.z + normalDir.z * radius);
+                    position.push(pathPoint.pos.x + normalDir.x * radius * pathPoint.widthScale, pathPoint.pos.y + normalDir.y * radius * pathPoint.widthScale, pathPoint.pos.z + normalDir.z * radius * pathPoint.widthScale);
                     normal.push(normalDir.x, normalDir.y, normalDir.z);
                     uv.push(r / radialSegments, uvDist);
 

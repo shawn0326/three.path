@@ -23,7 +23,7 @@
         constructor: THREE.PathGeometry,
 
         /**
-         * update uv
+         * update geometry by PathPointList instance
          * @param {THREE.PathPointList} pathPointList
          * @param {Object} options
          */
@@ -82,8 +82,8 @@
                 var up = pathPoint.up;
                 var _right = pathPoint.right;
 
-                right.copy(_right).multiplyScalar(halfWidth);
-                left.copy(_right).multiplyScalar(-halfWidth);
+                right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
+                left.copy(_right).multiplyScalar(-halfWidth * pathPoint.widthScale);
 
                 right.add(pathPoint.pos);
                 left.add(pathPoint.pos);

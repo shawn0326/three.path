@@ -2,6 +2,7 @@
 
     /**
      * THREE.Path3D 
+     * helper class for path drawing
      */
     THREE.Path3D = function() {
         this._drawing = false;
@@ -21,6 +22,8 @@
         this._pathPointList = new THREE.PathPointList();
 
         this._dirty = true;
+
+        this.up = new THREE.Vector3(0, 1, 0); // force up
     }
 
     Object.defineProperty( THREE.Path3D.prototype, "cornerRadius", {
@@ -71,7 +74,7 @@
 
     THREE.Path3D.prototype.getPathPointList = function() {
         if(this._drawing || this._dirty) {
-            this._pathPointList.set(this.getPoints(), this._cornerRadius, this._cornerSplit);
+            this._pathPointList.set(this.getPoints(), this._cornerRadius, this._cornerSplit, this.up);
             this._dirty = false;
         }
 
