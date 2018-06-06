@@ -86,6 +86,7 @@ window.onload = function() {
     gui.add( params, 'width').min(-0.1).max(1).onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            arrow: false
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -93,6 +94,7 @@ window.onload = function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
             progress: params.progress,
+            arrow: false
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -101,6 +103,7 @@ window.onload = function() {
         path3D.cornerRadius = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            arrow: false
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -108,6 +111,7 @@ window.onload = function() {
         path3D.cornerSplit = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            arrow: false
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -126,7 +130,8 @@ window.onload = function() {
             scrollingY += params.scrollSpeed;
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                uvOffset: params.scrollUV ? scrollingY : 0
+                uvOffset: params.scrollUV ? scrollingY : 0,
+                arrow: false
             });
         } else {
             if(playing) {
@@ -147,7 +152,8 @@ window.onload = function() {
                 geometry.update(pathPointList, {
                     width: params.width,
                     uvOffset: params.scrollUV ? scrollingY : 0,
-                    progress: params.progress
+                    progress: params.progress,
+                    arrow: false
                 });
             } else {
                 if(params.scrollUV) {
@@ -219,6 +225,7 @@ window.onload = function() {
             path3D.stop();
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
+                arrow: false
                 // uvOffset: time / 1000
             });
 

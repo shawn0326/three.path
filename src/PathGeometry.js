@@ -65,6 +65,7 @@
             var width = options.width || 0.1;
             var uvOffset = options.uvOffset || 0;
             var progress = options.progress !== undefined ? options.progress : 1;
+            var arrow = options.arrow !== undefined ? options.arrow : true;
 
             var count = 0;
 
@@ -175,8 +176,10 @@
             }
 
             // build arrow geometry
-            lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-            addStart(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
+            if(arrow) {
+                lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
+                addStart(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
+            }
 
             var positionAttribute = this.getAttribute( 'position' );
             var normalAttribute = this.getAttribute( 'normal' );
