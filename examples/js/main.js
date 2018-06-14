@@ -86,7 +86,7 @@ window.onload = function() {
     gui.add( params, 'width').min(-0.1).max(1).onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: false
+            arrow: true
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -94,7 +94,7 @@ window.onload = function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
             progress: params.progress,
-            arrow: false
+            arrow: true
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -103,7 +103,7 @@ window.onload = function() {
         path3D.cornerRadius = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: false
+            arrow: true
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -111,7 +111,7 @@ window.onload = function() {
         path3D.cornerSplit = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: false
+            arrow: true
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -131,7 +131,7 @@ window.onload = function() {
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
                 uvOffset: params.scrollUV ? scrollingY : 0,
-                arrow: false
+                arrow: true
             });
         } else {
             if(playing) {
@@ -153,7 +153,7 @@ window.onload = function() {
                     width: params.width,
                     uvOffset: params.scrollUV ? scrollingY : 0,
                     progress: params.progress,
-                    arrow: false
+                    arrow: true
                 });
             } else {
                 if(params.scrollUV) {
@@ -225,7 +225,7 @@ window.onload = function() {
             path3D.stop();
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                arrow: false
+                arrow: true
                 // uvOffset: time / 1000
             });
 

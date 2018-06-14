@@ -1,0 +1,23 @@
+{
+  "name": "three.path",
+  "version": "1.0.0",
+  "description": "three.path\r ===================",
+  "main": "index.js",
+  "scripts": {
+    "build": "./node_modules/.bin/rollup -i ./src/main.js -o ./build/three.path.js -f umd",
+    "b": "./node_modules/.bin/rollup -i ./src/main.js -o ./build/three.path.js -f umd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shawn0326/three.path.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shawn0326/three.path/issues"
+  },
+  "homepage": "https://github.com/shawn0326/three.path#readme",
+  "devDependencies": {
+    "rollup": "^0.60.4"
+  }
+}

@@ -36,7 +36,7 @@ var pathPointList = path3D.getPathPointList();
 
 ### PathGeometry
 
-![image](./images/screenshot.png) 
+![image](./examples/images/screenshot.png) 
 
 path geometry build from pathPointList.
 
@@ -58,7 +58,7 @@ geometry.updateUVScroll(offsetX, offsetY);
 
 ### PathTubeGeometry
 
-![image](./images/screenshot2.png) 
+![image](./examples/images/screenshot2.png) 
 
 path tube geometry build from pathPointList.
 
@@ -77,4 +77,19 @@ geometry.update(pathPointList, {
 // or just update uv
 geometry.updateUVScroll(offsetX, offsetY);
 
+````
+
+build
+===================
+
+### first run
+
+````
+npm install
+````
+
+### build
+
+````
+npm run b
 ````

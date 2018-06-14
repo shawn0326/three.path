@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>threejs-path-tube</title>
+    <title>three-path</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         body {
@@ -27,7 +27,11 @@
 <body>
     <div id="container" ></div>
     <div id="info">
-        path tube<br />
+        press 'd' to start drawing<br />
+        press left mouse button to draw path<br />
+        right mouse button to stop drawing<br />
+        press 'esc' or middle mouse button to clear path<br />
+        press 'p' to play progress animation
     </div>
 </body>
 
@@ -35,10 +39,8 @@
 <script src="js/OrbitControls.js"></script>
 <script src="js/dat.gui.min.js"></script>
 
-<script src="src/PathPointList.js"></script>
-<script src="src/PathGeometry.js"></script>
-<script src="src/PathTubeGeometry.js"></script>
+<script src="../build/three.path.js"></script>
 
-<script src="js/tube.js"></script>
+<script src="js/main.js"></script>
 
 </html>
