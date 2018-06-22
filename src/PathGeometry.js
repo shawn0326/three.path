@@ -63,6 +63,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
     _updateAttributes: function(pathPointList, options) {
         var width = options.width || 0.1;
         var uvOffset = options.uvOffset || 0;
+        var uvRatio = options.uvRatio || 1;
         var progress = options.progress !== undefined ? options.progress : 1;
         var arrow = options.arrow !== undefined ? options.arrow : true;
 
@@ -97,8 +98,8 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             );
 
             uv.push(
-                0, uvDist,
-                1, uvDist
+                uvDist, 0,
+                uvDist, 1
             );
 
             count += 2;
@@ -133,9 +134,9 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             );
 
             uv.push(
-                -0.5, uvDist,
-                1.5, uvDist,
-                0.5, uvDist + (halfWidth * 3 / (halfWidth * 2) )
+                uvDist, -0.5,
+                uvDist, 1.5,
+                uvDist + (halfWidth * 3 / (halfWidth * 2) / uvRatio ), 0.5 
             );
 
             count += 3;
@@ -163,10 +164,10 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
                     var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                     lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                    addVertices(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
+                    addVertices(lastPoint, width / 2, lastPoint.dist / width / uvRatio - uvOffset);
                     break;
                 } else {
-                    addVertices(pathPoint, width / 2, pathPoint.dist / width - uvOffset);
+                    addVertices(pathPoint, width / 2, pathPoint.dist / width / uvRatio - uvOffset);
                 }
                 
             }
@@ -177,7 +178,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
         // build arrow geometry
         if(arrow) {
             lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-            addStart(lastPoint, width / 2, lastPoint.dist / width - uvOffset);
+            addStart(lastPoint, width / 2, lastPoint.dist / width / uvRatio - uvOffset);
         }
 
         var positionAttribute = this.getAttribute( 'position' );

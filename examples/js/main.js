@@ -54,6 +54,7 @@ window.onload = function() {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     });
+    var uvRatio = 1;
 
     var material = new THREE.MeshBasicMaterial({
         color : 0x58DEDE, 
@@ -86,7 +87,8 @@ window.onload = function() {
     gui.add( params, 'width').min(-0.1).max(1).onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: true
+            arrow: true,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -94,7 +96,8 @@ window.onload = function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
             progress: params.progress,
-            arrow: true
+            arrow: true,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -103,7 +106,8 @@ window.onload = function() {
         path3D.cornerRadius = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: true
+            arrow: true,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -111,7 +115,8 @@ window.onload = function() {
         path3D.cornerSplit = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: true
+            arrow: true,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -131,7 +136,8 @@ window.onload = function() {
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
                 uvOffset: params.scrollUV ? scrollingY : 0,
-                arrow: true
+                arrow: true,
+                uvRatio: uvRatio
             });
         } else {
             if(playing) {
@@ -153,11 +159,12 @@ window.onload = function() {
                     width: params.width,
                     uvOffset: params.scrollUV ? scrollingY : 0,
                     progress: params.progress,
-                    arrow: true
+                    arrow: true,
+                    uvRatio: uvRatio
                 });
             } else {
                 if(params.scrollUV) {
-                    geometry.updateUVScroll(0, -params.scrollSpeed);
+                    geometry.updateUVScroll(-params.scrollSpeed, 0);
                 }
             }
         }
@@ -225,7 +232,8 @@ window.onload = function() {
             path3D.stop();
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                arrow: true
+                arrow: true,
+                uvRatio: uvRatio
                 // uvOffset: time / 1000
             });
 

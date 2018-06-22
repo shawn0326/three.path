@@ -53,6 +53,7 @@ window.onload = function() {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     });
+    var uvRatio = 1;
 
     var material = new THREE.MeshPhongMaterial({
         color : 0x58DEDE, 
@@ -84,14 +85,16 @@ window.onload = function() {
     gui.add( params, 'radius').min(0.1).max(1).onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments
+            radialSegments: params.radialSegments,
+            uvRatio: uvRatio,
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
     gui.add( params, 'radialSegments').min(2).max(10).step(1).onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments
+            radialSegments: params.radialSegments,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -100,6 +103,7 @@ window.onload = function() {
             radius: params.radius,
             radialSegments: params.radialSegments,
             progress: params.progress,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -108,7 +112,8 @@ window.onload = function() {
         pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments
+            radialSegments: params.radialSegments,
+            uvRatio: uvRatio,
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -116,7 +121,8 @@ window.onload = function() {
         pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments
+            radialSegments: params.radialSegments,
+            uvRatio: uvRatio
             // uvOffset: params.scrollUV ? scrollingY : 0
         });
     });
@@ -144,10 +150,11 @@ window.onload = function() {
                 params.progress = 1;
             }
             
-            geometry.update(pathPointList, {
+            geometry.update(uvRatiopathPointList, {
                 radius: params.radius,
                 radialSegments: params.radialSegments,
                 uvOffset: params.scrollUV ? scroll : 0,
+                uvRatio: uvRatio,
                 progress: params.progress
             });
         } else {
@@ -156,11 +163,12 @@ window.onload = function() {
 
             // geometry.update(pathPointList, {
             //     radius: radius,
+            //     uvRatio: uvRatio,
             //     uvOffset: params.scrollUV ? scroll : 0
             // });
 
             if(params.scrollUV) {
-                geometry.updateUVScroll(0, params.scrollSpeed);
+                geometry.updateUVScroll(params.scrollSpeed, 0);
             }
         }
         

@@ -29,6 +29,7 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
         var radialSegments = options.radialSegments || 8;
         radialSegments = Math.max(2, radialSegments);
         var uvOffset = options.uvOffset || 0;
+        var uvRatio = options.uvRatio || 1;
         var progress = options.progress !== undefined ? options.progress : 1;
 
         var count = 0;
@@ -53,7 +54,7 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
 
                 position.push(pathPoint.pos.x + normalDir.x * radius * pathPoint.widthScale, pathPoint.pos.y + normalDir.y * radius * pathPoint.widthScale, pathPoint.pos.z + normalDir.z * radius * pathPoint.widthScale);
                 normal.push(normalDir.x, normalDir.y, normalDir.z);
-                uv.push(r / radialSegments, uvDist);
+                uv.push(uvDist, r / radialSegments);
 
                 verticesCount++;
             }
@@ -102,10 +103,10 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
                     var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                     lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                    addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI) - uvOffset);
+                    addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI) / uvRatio - uvOffset);
                     break;
                 } else {
-                    addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI) - uvOffset);
+                    addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI) / uvRatio - uvOffset);
                 }
                 
             }
