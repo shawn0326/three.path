@@ -38,7 +38,7 @@ var pathPointList = path3D.getPathPointList();
 
 ![image](./examples/images/screenshot.png) 
 
-path geometry build from pathPointList.
+path geometry build from pathPointList. ->> [tube](https://shawn0326.github.io/three.path/examples/index.html)
 
 ````javascript
 
@@ -60,7 +60,7 @@ geometry.updateUVScroll(offsetX, offsetY);
 
 ![image](./examples/images/screenshot2.png) 
 
-path tube geometry build from pathPointList.
+path tube geometry build from pathPointList. ->> [tube](https://shawn0326.github.io/three.path/examples/tube.html)
 
 ````javascript
 
@@ -78,6 +78,13 @@ geometry.update(pathPointList, {
 geometry.updateUVScroll(offsetX, offsetY);
 
 ````
+
+demo
+===================
+
+![image](./examples/images/screenshot3.png) 
+
+[City](https://shawn0326.github.io/three.path/examples/city.html)
 
 build
 ===================
