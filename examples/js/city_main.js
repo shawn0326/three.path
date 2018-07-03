@@ -34,15 +34,22 @@ window.onload = function() {
 	scene.add( helper );
 
     var clock = new THREE.Clock();
+    var stats = new Stats();
+    document.body.appendChild( stats.dom );
 
     function render() {
 
-        requestAnimationFrame( render );
+        stats.begin();
+
         controls.update();
 
         city.run(clock.getDelta());
         
         renderer.render( scene, camera );
+
+        stats.end();
+
+        requestAnimationFrame( render );
     
     }
 

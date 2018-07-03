@@ -53,7 +53,6 @@ window.onload = function() {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     });
-    var uvRatio = 1;
 
     var material = new THREE.MeshPhongMaterial({
         color : 0x58DEDE, 
@@ -85,26 +84,20 @@ window.onload = function() {
     gui.add( params, 'radius').min(0.1).max(1).onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments,
-            uvRatio: uvRatio,
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            radialSegments: params.radialSegments
         });
     });
     gui.add( params, 'radialSegments').min(2).max(10).step(1).onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            radialSegments: params.radialSegments
         });
     });
     gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
         geometry.update(pathPointList, {
             radius: params.radius,
             radialSegments: params.radialSegments,
-            progress: params.progress,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            progress: params.progress
         });
     });
     gui.add( params, 'playSpeed').min(0.01).max(0.2);
@@ -112,18 +105,14 @@ window.onload = function() {
         pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments,
-            uvRatio: uvRatio,
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            radialSegments: params.radialSegments
         });
     });
     gui.add( params, 'cornerSplit').min(0).max(30).step(1).onChange(function(val) {
         pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
         geometry.update(pathPointList, {
             radius: params.radius,
-            radialSegments: params.radialSegments,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            radialSegments: params.radialSegments
         });
     });
 
@@ -150,26 +139,16 @@ window.onload = function() {
                 params.progress = 1;
             }
             
-            geometry.update(uvRatiopathPointList, {
+            geometry.update(pathPointList, {
                 radius: params.radius,
                 radialSegments: params.radialSegments,
-                uvOffset: params.scrollUV ? scroll : 0,
-                uvRatio: uvRatio,
                 progress: params.progress
             });
-        } else {
-            // scroll
-            scroll += params.scrollSpeed;
+        }
 
-            // geometry.update(pathPointList, {
-            //     radius: radius,
-            //     uvRatio: uvRatio,
-            //     uvOffset: params.scrollUV ? scroll : 0
-            // });
-
-            if(params.scrollUV) {
-                geometry.updateUVScroll(params.scrollSpeed, 0);
-            }
+        if(params.scrollUV) {
+            texture.offset.x -= params.scrollSpeed;
+            texture.repeat.x = 1;
         }
         
         renderer.render( scene, camera );

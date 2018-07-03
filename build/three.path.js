@@ -458,23 +458,6 @@
             this.drawRange.count = count;
         },
 
-        /**
-         * update uv
-         * @param {number} offsetX uv offset x
-         * @param {number} offsetY uv offset y
-         */
-        updateUVScroll: function(offsetX, offsetY) {
-            if(this.drawRange.count > 0) {
-                var uvAttribute = this.getAttribute( 'uv' );
-                for(var i = 0, l = uvAttribute.array.length; i < l; i += 2) {
-                    uvAttribute.array[i + 0] += offsetX;
-                    uvAttribute.array[i + 1] += offsetY;
-                }
-                uvAttribute.updateRange.count = this.drawRange.count * 2;
-                uvAttribute.needsUpdate = true;
-            }
-        },
-
         _resizeAttribute: function(name, attribute, len) {
             while(attribute.array.length < len) {
                 var oldLength = attribute.array.length;
@@ -486,8 +469,6 @@
 
         _updateAttributes: function(pathPointList, options) {
             var width = options.width || 0.1;
-            var uvOffset = options.uvOffset || 0;
-            var uvRatio = options.uvRatio || 1;
             var progress = options.progress !== undefined ? options.progress : 1;
             var arrow = options.arrow !== undefined ? options.arrow : true;
 
@@ -560,7 +541,7 @@
                 uv.push(
                     uvDist, -0.5,
                     uvDist, 1.5,
-                    uvDist + (halfWidth * 3 / (halfWidth * 2) / uvRatio ), 0.5 
+                    uvDist + (halfWidth * 3 / (halfWidth * 2) ), 0.5 
                 );
 
                 count += 3;
@@ -588,10 +569,10 @@
                         var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                         lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                        addVertices(lastPoint, width / 2, lastPoint.dist / width / uvRatio - uvOffset);
+                        addVertices(lastPoint, width / 2, lastPoint.dist / width);
                         break;
                     } else {
-                        addVertices(pathPoint, width / 2, pathPoint.dist / width / uvRatio - uvOffset);
+                        addVertices(pathPoint, width / 2, pathPoint.dist / width);
                     }
                     
                 }
@@ -602,7 +583,7 @@
             // build arrow geometry
             if(arrow) {
                 lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-                addStart(lastPoint, width / 2, lastPoint.dist / width / uvRatio - uvOffset);
+                addStart(lastPoint, width / 2, lastPoint.dist / width);
             }
 
             var positionAttribute = this.getAttribute( 'position' );
@@ -661,8 +642,6 @@
             var radius = options.radius || 0.1;
             var radialSegments = options.radialSegments || 8;
             radialSegments = Math.max(2, radialSegments);
-            var uvOffset = options.uvOffset || 0;
-            var uvRatio = options.uvRatio || 1;
             var progress = options.progress !== undefined ? options.progress : 1;
 
             var count = 0;
@@ -736,10 +715,10 @@
                         var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                         lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                        addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI) / uvRatio - uvOffset);
+                        addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI));
                         break;
                     } else {
-                        addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI) / uvRatio - uvOffset);
+                        addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI));
                     }
                     
                 }

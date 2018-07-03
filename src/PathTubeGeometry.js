@@ -28,8 +28,6 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
         var radius = options.radius || 0.1;
         var radialSegments = options.radialSegments || 8;
         radialSegments = Math.max(2, radialSegments);
-        var uvOffset = options.uvOffset || 0;
-        var uvRatio = options.uvRatio || 1;
         var progress = options.progress !== undefined ? options.progress : 1;
 
         var count = 0;
@@ -103,10 +101,10 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
                     var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                     lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                    addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI) / uvRatio - uvOffset);
+                    addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI));
                     break;
                 } else {
-                    addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI) / uvRatio - uvOffset);
+                    addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI));
                 }
                 
             }

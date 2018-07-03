@@ -54,7 +54,6 @@ window.onload = function() {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     });
-    var uvRatio = 1;
 
     var material = new THREE.MeshBasicMaterial({
         color : 0x58DEDE, 
@@ -87,18 +86,14 @@ window.onload = function() {
     gui.add( params, 'width').min(-0.1).max(1).onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: true,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            arrow: true
         });
     });
     gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
             progress: params.progress,
-            arrow: true,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            arrow: true
         });
     });
     gui.add( params, 'playSpeed').min(0.01).max(0.2);
@@ -106,25 +101,19 @@ window.onload = function() {
         path3D.cornerRadius = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: true,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            arrow: true
         });
     });
     gui.add( params, 'cornerSplit').min(0).max(30).step(1).onChange(function(val) {
         path3D.cornerSplit = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
-            arrow: true,
-            uvRatio: uvRatio
-            // uvOffset: params.scrollUV ? scrollingY : 0
+            arrow: true
         });
     });
     // gui.open();
 
-    var scrollingY = 0;
-
-    function render(time) {
+    function render() {
 
         requestAnimationFrame( render );
         controls.update();
@@ -132,12 +121,9 @@ window.onload = function() {
         container.style.cursor = drawing ? 'crosshair' : 'default'; 
 
         if(drawing) {
-            scrollingY += params.scrollSpeed;
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                uvOffset: params.scrollUV ? scrollingY : 0,
-                arrow: true,
-                uvRatio: uvRatio
+                arrow: true
             });
         } else {
             if(playing) {
@@ -157,16 +143,16 @@ window.onload = function() {
 
                 geometry.update(pathPointList, {
                     width: params.width,
-                    uvOffset: params.scrollUV ? scrollingY : 0,
                     progress: params.progress,
-                    arrow: true,
-                    uvRatio: uvRatio
+                    arrow: true
                 });
-            } else {
-                if(params.scrollUV) {
-                    geometry.updateUVScroll(-params.scrollSpeed, 0);
-                }
             }
+            
+        }
+
+        if(params.scrollUV) {
+            texture.offset.x -= params.scrollSpeed;
+            texture.repeat.x = 1;
         }
     
         renderer.render( scene, camera );
@@ -232,9 +218,7 @@ window.onload = function() {
             path3D.stop();
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
-                arrow: true,
-                uvRatio: uvRatio
-                // uvOffset: time / 1000
+                arrow: true
             });
 
         }

@@ -34,23 +34,6 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
         this.drawRange.count = count;
     },
 
-    /**
-     * update uv
-     * @param {number} offsetX uv offset x
-     * @param {number} offsetY uv offset y
-     */
-    updateUVScroll: function(offsetX, offsetY) {
-        if(this.drawRange.count > 0) {
-            var uvAttribute = this.getAttribute( 'uv' );
-            for(var i = 0, l = uvAttribute.array.length; i < l; i += 2) {
-                uvAttribute.array[i + 0] += offsetX;
-                uvAttribute.array[i + 1] += offsetY;
-            }
-            uvAttribute.updateRange.count = this.drawRange.count * 2;
-            uvAttribute.needsUpdate = true;
-        }
-    },
-
     _resizeAttribute: function(name, attribute, len) {
         while(attribute.array.length < len) {
             var oldLength = attribute.array.length;
@@ -62,8 +45,6 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
 
     _updateAttributes: function(pathPointList, options) {
         var width = options.width || 0.1;
-        var uvOffset = options.uvOffset || 0;
-        var uvRatio = options.uvRatio || 1;
         var progress = options.progress !== undefined ? options.progress : 1;
         var arrow = options.arrow !== undefined ? options.arrow : true;
 
@@ -136,7 +117,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             uv.push(
                 uvDist, -0.5,
                 uvDist, 1.5,
-                uvDist + (halfWidth * 3 / (halfWidth * 2) / uvRatio ), 0.5 
+                uvDist + (halfWidth * 3 / (halfWidth * 2) ), 0.5 
             );
 
             count += 3;
@@ -164,10 +145,10 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
                     var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                     lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                    addVertices(lastPoint, width / 2, lastPoint.dist / width / uvRatio - uvOffset);
+                    addVertices(lastPoint, width / 2, lastPoint.dist / width);
                     break;
                 } else {
-                    addVertices(pathPoint, width / 2, pathPoint.dist / width / uvRatio - uvOffset);
+                    addVertices(pathPoint, width / 2, pathPoint.dist / width);
                 }
                 
             }
@@ -178,7 +159,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
         // build arrow geometry
         if(arrow) {
             lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-            addStart(lastPoint, width / 2, lastPoint.dist / width / uvRatio - uvOffset);
+            addStart(lastPoint, width / 2, lastPoint.dist / width);
         }
 
         var positionAttribute = this.getAttribute( 'position' );

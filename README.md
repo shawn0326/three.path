@@ -47,12 +47,9 @@ var geometry = new THREE.PathGeometry();
 // update geometry when pathPointList changed
 geometry.update(pathPointList, {
     width: 0.3,
-    uvOffset: 0,
+    arrow: true,
     progress: 1
-}); 
-
-// or just update uv
-geometry.updateUVScroll(offsetX, offsetY);
+});
 
 ````
 
@@ -70,12 +67,8 @@ var geometry = new THREE.PathTubeGeometry();
 geometry.update(pathPointList, {
     radius: 0.1,
     radialSegments: 10,
-    uvOffset: 0,
     progress: 1
-}); 
-
-// or just update uv
-geometry.updateUVScroll(offsetX, offsetY);
+});
 
 ````
 

@@ -24,13 +24,8 @@ function City(params) {
     this.buildings = this.buildingsGroup.children;
 
     this.speeds = [];
-    for(var i = 0; i < this.roads.length; i++) {
-        this.speeds[i] = Math.random() * 0.08;
-    }
-
-    this.speeds2 = [];
     for(var i = 0; i < this.buildings.length; i++) {
-        this.speeds2[i] = Math.random() * 0.8 + 0.4;
+        this.speeds[i] = Math.random() * 0.8 + 0.4;
     }
 
     this._progress = 0;
@@ -42,31 +37,23 @@ City.prototype = Object.assign(City.prototype, {
             this._progress += 0.5 * delta;
 
             var that = this;
-            var index = 0;
-            var speeds = this.speeds;
             this.roads.forEach(function(obj) {
                 var geometry = obj.geometry;
                 geometry._updateParam.progress = that._progress;
-                geometry._updateParam.uvOffset += delta * speeds[index++];
                 geometry.update(geometry._pathPointList, geometry._updateParam);
                 geometry.computeBoundingBox();
                 geometry.computeBoundingSphere();
 
                 // var material = obj.material;
                 // material.opacity = that._progress;
-            });
-
-            
-        } else {
-            var index = 0;
-            var speeds = this.speeds;
-            this.roads.forEach(function(obj) {
-                obj.geometry.updateUVScroll(-delta * speeds[index++], 0);
-            });
+            });            
         }
 
+        this._roadTexture.offset.x -= delta * 0.02 * 24;
+        this._roadTexture.repeat.x = 1 / 24;
+
         var index = 0;
-        var speeds = this.speeds2;
+        var speeds = this.speeds;
         this.buildings.forEach(function(obj) {
             obj.scale.y = Math.min(1, obj.scale.y + delta * speeds[index++]);
 
@@ -121,10 +108,8 @@ City.prototype = Object.assign(City.prototype, {
             geometry._pathPointList = pathPointList;
             geometry._updateParam = {
                 width: width,
-                uvRatio: 24,
                 arrow: false,
-                progress: 0,
-                uvOffset: 0
+                progress: 0
             };
             geometry.update(geometry._pathPointList, geometry._updateParam);
 
