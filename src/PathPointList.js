@@ -150,7 +150,7 @@ PathPointList.prototype._hardCorner = function(current, next, up) {
     point.dist = lastPoint.dist + lastDirLength;
 
     var _cos = lastDir.dot( nextDir );
-    point.widthScale = 1 / Math.sqrt( (1 + _cos) / 2 );
+    point.widthScale = Math.min(1 / Math.sqrt( (1 + _cos) / 2 ), 1.414213562373);
 
     // for sharp corner
     // if(point.widthScale > 1.414213562373) {
