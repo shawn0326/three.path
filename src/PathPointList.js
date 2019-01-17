@@ -132,7 +132,11 @@ PathPointList.prototype._hardCorner = function(current, next, up) {
     point.dir.normalize();
 
     if(up) {
-        point.right.crossVectors( point.dir, up ).normalize();
+        if (point.dir.dot(up) === 1) {
+            point.right.crossVectors( nextDir, up ).normalize();
+        } else {
+            point.right.crossVectors( point.dir, up ).normalize();
+        }
         
         point.up.crossVectors( point.right, point.dir ).normalize();
     } else {
@@ -150,7 +154,7 @@ PathPointList.prototype._hardCorner = function(current, next, up) {
     point.dist = lastPoint.dist + lastDirLength;
 
     var _cos = lastDir.dot( nextDir );
-    point.widthScale = Math.min(1 / Math.sqrt( (1 + _cos) / 2 ), 1.414213562373);
+    point.widthScale = Math.min(1 / Math.sqrt( (1 + _cos) / 2 ), 1.414213562373) || 1;
 
     // for sharp corner
     // if(point.widthScale > 1.414213562373) {
