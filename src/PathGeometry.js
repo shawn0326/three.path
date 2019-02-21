@@ -47,6 +47,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
         var width = options.width || 0.1;
         var progress = options.progress !== undefined ? options.progress : 1;
         var arrow = options.arrow !== undefined ? options.arrow : true;
+        var side = options.side !== undefined ? options.side : "both";
 
         var count = 0;
 
@@ -62,8 +63,17 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             var up = pathPoint.up;
             var _right = pathPoint.right;
 
-            right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
-            left.copy(_right).multiplyScalar(-halfWidth * pathPoint.widthScale);
+            if (side !== "left") {
+                right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
+            } else {
+                right.set(0, 0, 0);
+            }
+            
+            if (side !== "right") {
+                left.copy(_right).multiplyScalar(-halfWidth * pathPoint.widthScale);
+            } else {
+                left.set(0, 0, 0);
+            }
 
             right.add(pathPoint.pos);
             left.add(pathPoint.pos);
@@ -92,8 +102,18 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             var up = pathPoint.up;
             var _right = pathPoint.right;
 
-            right.copy(_right).multiplyScalar(halfWidth * 2);
-            left.copy(_right).multiplyScalar(-halfWidth * 2);
+            if (side !== "left") {
+                right.copy(_right).multiplyScalar(halfWidth * 2);
+            } else {
+                right.set(0, 0, 0);
+            }
+            
+            if (side !== "right") {
+                left.copy(_right).multiplyScalar(-halfWidth * 2);
+            } else {
+                left.set(0, 0, 0);
+            }
+
             sharp.copy(dir).setLength(halfWidth * 3);
 
             // TODO calculate up dir
@@ -115,9 +135,9 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             );
 
             uv.push(
-                uvDist, -0.5,
-                uvDist, 1.5,
-                uvDist + (halfWidth * 3 / (halfWidth * 2) ), 0.5 
+                uvDist, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
+                uvDist, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
+                uvDist + ( halfWidth * 3 / (side !== "both" ? halfWidth : halfWidth * 2) ), side !== "both" ? 0 : 0.5 
             );
 
             count += 3;
@@ -145,10 +165,10 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
                     var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
                     lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-                    addVertices(lastPoint, width / 2, lastPoint.dist / width);
+                    addVertices(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
                     break;
                 } else {
-                    addVertices(pathPoint, width / 2, pathPoint.dist / width);
+                    addVertices(pathPoint, width / 2, pathPoint.dist / (side !== "both" ? width / 2 : width));
                 }
                 
             }
@@ -159,7 +179,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
         // build arrow geometry
         if(arrow) {
             lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-            addStart(lastPoint, width / 2, lastPoint.dist / width);
+            addStart(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
         }
 
         var positionAttribute = this.getAttribute( 'position' );

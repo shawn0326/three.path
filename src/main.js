@@ -1,9 +1,4 @@
-import {Path3D} from './Path3D.js';
-import {PathPointList} from './PathPointList.js';
-import {PathGeometry} from './PathGeometry.js';
-import {PathTubeGeometry} from './PathTubeGeometry.js';
-
-THREE.Path3D = Path3D;
-THREE.PathPointList = PathPointList;
-THREE.PathGeometry = PathGeometry;
-THREE.PathTubeGeometry = PathTubeGeometry;
+export {Path3D} from './Path3D.js';
+export {PathPointList} from './PathPointList.js';
+export {PathGeometry} from './PathGeometry.js';
+export {PathTubeGeometry} from './PathTubeGeometry.js';

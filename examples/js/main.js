@@ -68,7 +68,7 @@ window.onload = function() {
     line.drawMode = THREE.TriangleStripDrawMode;
     scene.add(line);
 
-    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};
+    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, side: "both", cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};
     var gui = new dat.GUI();
 
     gui.add( params, 'useTexture').onChange(function(val) {
@@ -86,12 +86,21 @@ window.onload = function() {
     gui.add( params, 'width').min(-0.1).max(1).onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            side: params.side,
+            arrow: true
+        });
+    });
+    gui.add( params, 'side', ["both", "left", "right"]).onChange(function(value) {
+        geometry.update(path3D.getPathPointList(), {
+            width: params.width,
+            side: value,
             arrow: true
         });
     });
     gui.add( params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            side: params.side,
             progress: params.progress,
             arrow: true
         });
@@ -101,6 +110,7 @@ window.onload = function() {
         path3D.cornerRadius = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            side: params.side,
             arrow: true
         });
     });
@@ -108,6 +118,7 @@ window.onload = function() {
         path3D.cornerSplit = val;
         geometry.update(path3D.getPathPointList(), {
             width: params.width,
+            side: params.side,
             arrow: true
         });
     });
@@ -123,6 +134,7 @@ window.onload = function() {
         if(drawing) {
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
+                side: params.side,
                 arrow: true
             });
         } else {
@@ -143,6 +155,7 @@ window.onload = function() {
 
                 geometry.update(pathPointList, {
                     width: params.width,
+                    side: params.side,
                     progress: params.progress,
                     arrow: true
                 });
@@ -218,6 +231,7 @@ window.onload = function() {
             path3D.stop();
             geometry.update(path3D.getPathPointList(), {
                 width: params.width,
+                side: params.side,
                 arrow: true
             });
 
