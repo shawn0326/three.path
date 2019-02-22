@@ -26,4 +26,13 @@ PathPoint.prototype.lerpPathPoints = function(p1, p2, alpha) {
     this.widthScale = (p2.widthScale - p1.widthScale) * alpha + p1.widthScale;
 }
 
+PathPoint.prototype.copy = function(source) {
+    this.pos.copy(source.pos);
+    this.dir.copy(source.dir);
+    this.up.copy(source.up);
+    this.right.copy(source.right);
+    this.dist = source.dist;
+    this.widthScale = source.widthScale;
+}
+
 export {PathPoint};

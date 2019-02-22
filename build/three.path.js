@@ -33,6 +33,15 @@
 	    this.widthScale = (p2.widthScale - p1.widthScale) * alpha + p1.widthScale;
 	};
 
+	PathPoint.prototype.copy = function(source) {
+	    this.pos.copy(source.pos);
+	    this.dir.copy(source.dir);
+	    this.up.copy(source.up);
+	    this.right.copy(source.right);
+	    this.dist = source.dist;
+	    this.widthScale = source.widthScale;
+	};
+
 	/**
 	 * PathPointList 
 	 * input points to generate a PathPoint list
@@ -48,21 +57,38 @@
 	 * @param {number} cornerRadius? the corner radius. set 0 to disable round corner. default is 0.1
 	 * @param {number} cornerSplit? the corner split. default is 10.
 	 * @param {number} up? force up. default is auto up (calculate by tangent).
+	 * @param {boolean} close? close path. default is false.
 	 */
-	PathPointList.prototype.set = function(points, cornerRadius, cornerSplit, up) {
+	PathPointList.prototype.set = function(points, cornerRadius, cornerSplit, up, close) {
+	    points = points.slice(0);
+
 	    if(points.length < 2) {
 	        this.count = 0;
+	        console.warn("PathPointList: points length less than 2.");
 	        return;
 	    }
 
 	    cornerRadius = cornerRadius !== undefined ? cornerRadius : 0.1;
 	    cornerSplit = cornerSplit !== undefined ? cornerSplit : 10;
+	    close = close !== undefined ? close : false;
+
+	    if (close && !points[0].equals(points[points.length - 1])) {
+	        points.push(new THREE.Vector3().copy(points[0]));
+	    }
 
 	    for(var i = 0, l = points.length; i < l; i++) {
 	        if(i === 0) {
 	            this._start(points[i], points[i + 1], up);
 	        } else if(i === l - 1) {
-	            this._end(points[i]);
+	            if (close) {
+	                this._corner(points[i], points[1], cornerRadius, cornerSplit, up);
+	                // fix start
+	                var dist = this.array[0].dist; // should not copy dist
+	                this.array[0].copy(this.array[this.count - 1]);
+	                this.array[0].dist = dist;
+	            } else {
+	                this._end(points[i]);
+	            }
 	        } else {
 	            this._corner(points[i], points[i + 1], cornerRadius, cornerSplit, up);
 	        }
