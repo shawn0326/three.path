@@ -734,8 +734,8 @@
 	                    //     );
 	                    // } else {
 	                        indices.push(
-	                            begin1 + i + 1, begin1 + i, begin2 + i,
-	                            begin2 + i + 1, begin1 + i + 1, begin2 + i
+	                            begin2 + i, begin1 + i, begin1 + i + 1,
+							    begin2 + i, begin1 + i + 1, begin2 + i + 1
 	                        );
 	                    // }
 	                    

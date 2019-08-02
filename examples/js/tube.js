@@ -59,7 +59,7 @@ window.onload = function() {
         depthWrite: true,
         transparent: true,
         opacity: 0.9,
-        side: THREE.DoubleSide
+        side: THREE.FrontSide
     });
     material.map = texture;
     
