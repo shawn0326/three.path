@@ -25,6 +25,7 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
             newIndex.name = index.name;
             newIndex.usage = index.usage;
             this.setIndex(newIndex);
+            index = newIndex;
         }
     },
 

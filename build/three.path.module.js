@@ -504,6 +504,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             } else {
                 this.addAttribute(name, newAttribute);
             }
+            attribute = newAttribute;
         }
     },
 
@@ -699,6 +700,7 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
             newIndex.name = index.name;
             newIndex.usage = index.usage;
             this.setIndex(newIndex);
+            index = newIndex;
         }
     },
 

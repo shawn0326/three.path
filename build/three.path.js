@@ -510,6 +510,7 @@
 	            } else {
 	                this.addAttribute(name, newAttribute);
 	            }
+	            attribute = newAttribute;
 	        }
 	    },
 
@@ -705,6 +706,7 @@
 	            newIndex.name = index.name;
 	            newIndex.usage = index.usage;
 	            this.setIndex(newIndex);
+	            index = newIndex;
 	        }
 	    },
 

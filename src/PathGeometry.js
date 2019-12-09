@@ -55,6 +55,7 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
             } else {
                 this.addAttribute(name, newAttribute);
             }
+            attribute = newAttribute;
         }
     },
 
