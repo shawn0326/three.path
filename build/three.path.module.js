@@ -458,9 +458,15 @@ var PathGeometry = function(maxVertex) {
 
     maxVertex = maxVertex || 3000;
 
-    this.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
-    this.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
-    this.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( maxVertex * 2 ), 2 ).setDynamic( true ) );
+    if (this.setAttribute) {
+        this.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setUsage( THREE.DynamicDrawUsage ) );
+        this.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setUsage( THREE.DynamicDrawUsage ) );
+        this.setAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( maxVertex * 2 ), 2 ).setUsage( THREE.DynamicDrawUsage ) );
+    } else {
+        this.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
+        this.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
+        this.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( maxVertex * 2 ), 2 ).setDynamic( true ) );
+    }
 
     this.drawRange.start = 0;
     this.drawRange.count = 0;
@@ -486,9 +492,18 @@ PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prot
     _resizeAttribute: function(name, attribute, len) {
         while(attribute.array.length < len) {
             var oldLength = attribute.array.length;
-            attribute = attribute.clone();
-            attribute.setArray(new Float32Array( oldLength * 2 ));
-            this.addAttribute(name, attribute);
+            var newAttribute = new THREE.BufferAttribute(
+                new Float32Array( oldLength * 2 ), 
+                attribute.itemSize,
+                attribute.normalized
+            );
+            newAttribute.name = attribute.name;
+            newAttribute.usage = attribute.usage;
+            if (this.setAttribute) {
+                this.setAttribute(name, newAttribute);
+            } else {
+                this.addAttribute(name, newAttribute);
+            }
         }
     },
 
@@ -677,9 +692,13 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
     _resizeIndex: function(index, len) {
         while(index.array.length < len) {
             var oldLength = index.array.length;
-            index = index.clone();
-            index.setArray(oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ));
-            this.setIndex(index);
+            var newIndex = new THREE.BufferAttribute(
+                oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ),
+                1
+            );
+            newIndex.name = index.name;
+            newIndex.usage = index.usage;
+            this.setIndex(newIndex);
         }
     },
 

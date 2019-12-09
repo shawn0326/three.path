@@ -18,9 +18,13 @@ PathTubeGeometry.prototype = Object.assign( Object.create( PathGeometry.prototyp
     _resizeIndex: function(index, len) {
         while(index.array.length < len) {
             var oldLength = index.array.length;
-            index = index.clone();
-            index.setArray(oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ));
-            this.setIndex(index);
+            var newIndex = new THREE.BufferAttribute(
+                oldLength * 2 > 65535 ? new Uint32Array( oldLength * 2 ) : new Uint16Array( oldLength * 2 ),
+                1
+            );
+            newIndex.name = index.name;
+            newIndex.usage = index.usage;
+            this.setIndex(newIndex);
         }
     },
 

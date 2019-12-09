@@ -48,7 +48,7 @@ window.onload = function() {
     this.fixRadius = 0.5; // fixRadius should larger than cornerRadius
     this.height = 0.1;
 
-    var geometry = new THREE.PathGeometry();
+    var geometry = new THREE.PathGeometry(128);
 
     var texture = new THREE.TextureLoader().load( 'images/diffuse.jpg', function( texture ) {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
