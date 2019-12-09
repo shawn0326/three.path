@@ -693,6 +693,7 @@
 	        var radius = options.radius || 0.1;
 	        var radialSegments = options.radialSegments || 8;
 	        radialSegments = Math.max(2, radialSegments);
+	        var startRad = options.startRad || 0;
 	        var progress = options.progress !== undefined ? options.progress : 1;
 
 	        var count = 0;
@@ -713,7 +714,7 @@
 	                if(_r == radialSegments) {
 	                    _r = 0;
 	                }
-	                normalDir.copy(pathPoint.up).applyAxisAngle(pathPoint.dir, Math.PI * 2 * _r / radialSegments).normalize();
+	                normalDir.copy(pathPoint.up).applyAxisAngle(pathPoint.dir, startRad + Math.PI * 2 * _r / radialSegments).normalize();
 
 	                position.push(pathPoint.pos.x + normalDir.x * radius * pathPoint.widthScale, pathPoint.pos.y + normalDir.y * radius * pathPoint.widthScale, pathPoint.pos.z + normalDir.z * radius * pathPoint.widthScale);
 	                normal.push(normalDir.x, normalDir.y, normalDir.z);
