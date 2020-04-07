@@ -277,7 +277,6 @@ PathPointList.prototype._getCornerBezierCurve = function(last, current, next, co
 
 /**
  * PathGeometry
- * need drawtype THREE.TriangleStripDrawMode
  */
 var PathGeometry = function(maxVertex) {
 	THREE.BufferGeometry.call(this);

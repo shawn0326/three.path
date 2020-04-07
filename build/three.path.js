@@ -283,7 +283,6 @@
 
 	/**
 	 * PathGeometry
-	 * need drawtype THREE.TriangleStripDrawMode
 	 */
 	var PathGeometry = function(maxVertex) {
 		THREE.BufferGeometry.call(this);
