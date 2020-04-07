@@ -1,230 +1,229 @@
-import {PathPoint} from './PathPoint.js';
+import { PathPoint } from './PathPoint.js';
 
 /**
- * PathGeometry 
+ * PathGeometry
  * need drawtype THREE.TriangleStripDrawMode
  */
 var PathGeometry = function(maxVertex) {
-    THREE.BufferGeometry.call( this );
+	THREE.BufferGeometry.call(this);
 
-    maxVertex = maxVertex || 3000;
+	maxVertex = maxVertex || 3000;
 
-    if (this.setAttribute) {
-        this.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setUsage( THREE.DynamicDrawUsage ) );
-        this.setAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setUsage( THREE.DynamicDrawUsage ) );
-        this.setAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( maxVertex * 2 ), 2 ).setUsage( THREE.DynamicDrawUsage ) );
-    } else {
-        this.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
-        this.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( maxVertex * 3 ), 3 ).setDynamic( true ) );
-        this.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( maxVertex * 2 ), 2 ).setDynamic( true ) );
-    }
+	if (this.setAttribute) {
+		this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
+		this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
+		this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+	} else {
+		this.addAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
+		this.addAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
+		this.addAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
+	}
 
-    this.drawRange.start = 0;
-    this.drawRange.count = 0;
+	this.drawRange.start = 0;
+	this.drawRange.count = 0;
 }
 
-PathGeometry.prototype = Object.assign( Object.create( THREE.BufferGeometry.prototype ), {
+PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.prototype), {
 
-    constructor: PathGeometry,
+	constructor: PathGeometry,
 
-    /**
+	/**
      * update geometry by PathPointList instance
      * @param {PathPointList} pathPointList
      * @param {Object} options
      */
-    update: function(pathPointList, options) {
-        // update attributes
-        options = options || {};
-        var count = this._updateAttributes(pathPointList, options);
+	update: function(pathPointList, options) {
+		// update attributes
+		options = options || {};
+		var count = this._updateAttributes(pathPointList, options);
 
-        this.drawRange.count = count;
-    },
+		this.drawRange.count = count;
+	},
 
-    _resizeAttribute: function(name, attribute, len) {
-        while(attribute.array.length < len) {
-            var oldLength = attribute.array.length;
-            var newAttribute = new THREE.BufferAttribute(
-                new Float32Array( oldLength * 2 ), 
-                attribute.itemSize,
-                attribute.normalized
-            );
-            newAttribute.name = attribute.name;
-            newAttribute.usage = attribute.usage;
-            if (this.setAttribute) {
-                this.setAttribute(name, newAttribute);
-            } else {
-                this.addAttribute(name, newAttribute);
-            }
-            attribute = newAttribute;
-        }
-    },
+	_resizeAttribute: function(name, attribute, len) {
+		while (attribute.array.length < len) {
+			var oldLength = attribute.array.length;
+			var newAttribute = new THREE.BufferAttribute(
+				new Float32Array(oldLength * 2),
+				attribute.itemSize,
+				attribute.normalized
+			);
+			newAttribute.name = attribute.name;
+			newAttribute.usage = attribute.usage;
+			if (this.setAttribute) {
+				this.setAttribute(name, newAttribute);
+			} else {
+				this.addAttribute(name, newAttribute);
+			}
+			attribute = newAttribute;
+		}
+	},
 
-    _updateAttributes: function(pathPointList, options) {
-        var width = options.width || 0.1;
-        var progress = options.progress !== undefined ? options.progress : 1;
-        var arrow = options.arrow !== undefined ? options.arrow : true;
-        var side = options.side !== undefined ? options.side : "both";
+	_updateAttributes: function(pathPointList, options) {
+		var width = options.width || 0.1;
+		var progress = options.progress !== undefined ? options.progress : 1;
+		var arrow = options.arrow !== undefined ? options.arrow : true;
+		var side = options.side !== undefined ? options.side : "both";
 
-        var count = 0;
+		var count = 0;
 
-        // modify data
-        var position = [];
-        var normal = [];
-        var uv = [];
+		// modify data
+		var position = [];
+		var normal = [];
+		var uv = [];
 
-        var right = new THREE.Vector3();
-        var left = new THREE.Vector3();
-        function addVertices(pathPoint, halfWidth, uvDist) {
-            var dir = pathPoint.dir;
-            var up = pathPoint.up;
-            var _right = pathPoint.right;
+		var right = new THREE.Vector3();
+		var left = new THREE.Vector3();
+		function addVertices(pathPoint, halfWidth, uvDist) {
+			var dir = pathPoint.dir;
+			var up = pathPoint.up;
+			var _right = pathPoint.right;
 
-            if (side !== "left") {
-                right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
-            } else {
-                right.set(0, 0, 0);
-            }
-            
-            if (side !== "right") {
-                left.copy(_right).multiplyScalar(-halfWidth * pathPoint.widthScale);
-            } else {
-                left.set(0, 0, 0);
-            }
+			if (side !== "left") {
+				right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
+			} else {
+				right.set(0, 0, 0);
+			}
 
-            right.add(pathPoint.pos);
-            left.add(pathPoint.pos);
+			if (side !== "right") {
+				left.copy(_right).multiplyScalar(-halfWidth * pathPoint.widthScale);
+			} else {
+				left.set(0, 0, 0);
+			}
 
-            position.push(
-                left.x, left.y, left.z,
-                right.x, right.y, right.z
-            );
+			right.add(pathPoint.pos);
+			left.add(pathPoint.pos);
 
-            normal.push(
-                up.x, up.y, up.z,
-                up.x, up.y, up.z
-            );
+			position.push(
+				left.x, left.y, left.z,
+				right.x, right.y, right.z
+			);
 
-            uv.push(
-                uvDist, 0,
-                uvDist, 1
-            );
+			normal.push(
+				up.x, up.y, up.z,
+				up.x, up.y, up.z
+			);
 
-            count += 2;
-        }
+			uv.push(
+				uvDist, 0,
+				uvDist, 1
+			);
 
-        var sharp = new THREE.Vector3();
-        function addStart(pathPoint, halfWidth, uvDist) {
-            var dir = pathPoint.dir;
-            var up = pathPoint.up;
-            var _right = pathPoint.right;
+			count += 2;
+		}
 
-            if (side !== "left") {
-                right.copy(_right).multiplyScalar(halfWidth * 2);
-            } else {
-                right.set(0, 0, 0);
-            }
-            
-            if (side !== "right") {
-                left.copy(_right).multiplyScalar(-halfWidth * 2);
-            } else {
-                left.set(0, 0, 0);
-            }
+		var sharp = new THREE.Vector3();
+		function addStart(pathPoint, halfWidth, uvDist) {
+			var dir = pathPoint.dir;
+			var up = pathPoint.up;
+			var _right = pathPoint.right;
 
-            sharp.copy(dir).setLength(halfWidth * 3);
+			if (side !== "left") {
+				right.copy(_right).multiplyScalar(halfWidth * 2);
+			} else {
+				right.set(0, 0, 0);
+			}
 
-            // TODO calculate up dir
+			if (side !== "right") {
+				left.copy(_right).multiplyScalar(-halfWidth * 2);
+			} else {
+				left.set(0, 0, 0);
+			}
 
-            right.add(pathPoint.pos);
-            left.add(pathPoint.pos);
-            sharp.add(pathPoint.pos);
+			sharp.copy(dir).setLength(halfWidth * 3);
 
-            position.push(
-                left.x, left.y, left.z,
-                right.x, right.y, right.z,
-                sharp.x, sharp.y, sharp.z
-            );
+			// TODO calculate up dir
 
-            normal.push(
-                up.x, up.y, up.z,
-                up.x, up.y, up.z,
-                up.x, up.y, up.z
-            );
+			right.add(pathPoint.pos);
+			left.add(pathPoint.pos);
+			sharp.add(pathPoint.pos);
 
-            uv.push(
-                uvDist, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
-                uvDist, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
-                uvDist + ( halfWidth * 3 / (side !== "both" ? halfWidth : halfWidth * 2) ), side !== "both" ? 0 : 0.5 
-            );
+			position.push(
+				left.x, left.y, left.z,
+				right.x, right.y, right.z,
+				sharp.x, sharp.y, sharp.z
+			);
 
-            count += 3;
-        }
+			normal.push(
+				up.x, up.y, up.z,
+				up.x, up.y, up.z,
+				up.x, up.y, up.z
+			);
 
-        // build path geometry
-        var totalDistance = pathPointList.distance();
+			uv.push(
+				uvDist, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
+				uvDist, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
+				uvDist + (halfWidth * 3 / (side !== "both" ? halfWidth : halfWidth * 2)), side !== "both" ? 0 : 0.5
+			);
 
-        if(totalDistance == 0) {
-            return 0;
-        }
-        
-        var progressDistance = progress * totalDistance;
-        var lastPoint;
+			count += 3;
+		}
 
-        if(progressDistance > 0) {
-            for(var i = 0; i < pathPointList.count; i++) {
-                var pathPoint = pathPointList.array[i];
+		// build path geometry
+		var totalDistance = pathPointList.distance();
 
-                if(pathPoint.dist > progressDistance) {
-                    var prevPoint =  pathPointList.array[i - 1];
-                    lastPoint = new PathPoint();
+		if (totalDistance == 0) {
+			return 0;
+		}
 
-                    // linear lerp for progress
-                    var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
-                    lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
+		var progressDistance = progress * totalDistance;
+		var lastPoint;
 
-                    addVertices(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
-                    break;
-                } else {
-                    addVertices(pathPoint, width / 2, pathPoint.dist / (side !== "both" ? width / 2 : width));
-                }
-                
-            }
-        } else {
-            lastPoint = pathPointList.array[0];
-        }
+		if (progressDistance > 0) {
+			for (var i = 0; i < pathPointList.count; i++) {
+				var pathPoint = pathPointList.array[i];
 
-        // build arrow geometry
-        if(arrow) {
-            lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-            addStart(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
-        }
+				if (pathPoint.dist > progressDistance) {
+					var prevPoint =  pathPointList.array[i - 1];
+					lastPoint = new PathPoint();
 
-        var positionAttribute = this.getAttribute( 'position' );
-        var normalAttribute = this.getAttribute( 'normal' );
-        var uvAttribute = this.getAttribute( 'uv' );
+					// linear lerp for progress
+					var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
+					lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-        this._resizeAttribute('position', positionAttribute, position.length);
-        this._resizeAttribute('normal', normalAttribute, normal.length);
-        this._resizeAttribute('uv', uvAttribute, uv.length);
+					addVertices(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
+					break;
+				} else {
+					addVertices(pathPoint, width / 2, pathPoint.dist / (side !== "both" ? width / 2 : width));
+				}
+			}
+		} else {
+			lastPoint = pathPointList.array[0];
+		}
 
-        positionAttribute = this.getAttribute( 'position' );
-        normalAttribute = this.getAttribute( 'normal' );
-        uvAttribute = this.getAttribute( 'uv' );
+		// build arrow geometry
+		if (arrow) {
+			lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
+			addStart(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
+		}
 
-        positionAttribute.array.set(position, 0);
-        normalAttribute.array.set(normal, 0);
-        uvAttribute.array.set(uv, 0);
+		var positionAttribute = this.getAttribute('position');
+		var normalAttribute = this.getAttribute('normal');
+		var uvAttribute = this.getAttribute('uv');
 
-        positionAttribute.updateRange.count = position.length;
-        normalAttribute.updateRange.count = normal.length;
-        uvAttribute.updateRange.count = uv.length;
+		this._resizeAttribute('position', positionAttribute, position.length);
+		this._resizeAttribute('normal', normalAttribute, normal.length);
+		this._resizeAttribute('uv', uvAttribute, uv.length);
 
-        positionAttribute.needsUpdate = true;
-        normalAttribute.needsUpdate = true;
-        uvAttribute.needsUpdate = true;
+		positionAttribute = this.getAttribute('position');
+		normalAttribute = this.getAttribute('normal');
+		uvAttribute = this.getAttribute('uv');
 
-        return count;
-    }
+		positionAttribute.array.set(position, 0);
+		normalAttribute.array.set(normal, 0);
+		uvAttribute.array.set(uv, 0);
+
+		positionAttribute.updateRange.count = position.length;
+		normalAttribute.updateRange.count = normal.length;
+		uvAttribute.updateRange.count = uv.length;
+
+		positionAttribute.needsUpdate = true;
+		normalAttribute.needsUpdate = true;
+		uvAttribute.needsUpdate = true;
+
+		return count;
+	}
 
 });
 
-export {PathGeometry};
+export { PathGeometry };
