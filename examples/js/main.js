@@ -44,7 +44,7 @@ window.onload = function() {
     var raycaster = new THREE.Raycaster();
     var mouse = new THREE.Vector2();
     
-    var path3D = new THREE.Path3D();
+    var path3D = new Path3D();
     this.fixRadius = 0.5; // fixRadius should larger than cornerRadius
     this.height = 0.1;
 
@@ -65,7 +65,6 @@ window.onload = function() {
     material.map = texture;
     
     var line = new THREE.Mesh(geometry, material);
-    line.drawMode = THREE.TriangleStripDrawMode;
     scene.add(line);
 
     var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, side: "both", cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};

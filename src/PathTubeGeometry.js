@@ -6,32 +6,15 @@ import { PathGeometry } from './PathGeometry.js';
  */
 var PathTubeGeometry = function(maxVertex) {
 	PathGeometry.call(this, maxVertex || 1000);
-
-	this.setIndex(new Array((maxVertex || 1000) * 2));
 }
 
 PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype), {
 
 	constructor: PathTubeGeometry,
 
-	_resizeIndex: function(index, len) {
-		while (index.array.length < len) {
-			var oldLength = index.array.length;
-			var newIndex = new THREE.BufferAttribute(
-				oldLength * 2 > 65535 ? new Uint32Array(oldLength * 2) : new Uint16Array(oldLength * 2),
-				1
-			);
-			newIndex.name = index.name;
-			newIndex.usage = index.usage;
-			this.setIndex(newIndex);
-			index = newIndex;
-		}
-	},
-
 	_updateAttributes: function(pathPointList, options) {
 		var radius = options.radius || 0.1;
-		var radialSegments = options.radialSegments || 8;
-		radialSegments = Math.max(2, radialSegments);
+		var radialSegments = Math.max(2, options.radialSegments || 8);
 		var startRad = options.startRad || 0;
 		var progress = options.progress !== undefined ? options.progress : 1;
 
@@ -67,17 +50,10 @@ PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype)
 				var begin2 = verticesCount - (radialSegments + 1);
 
 				for (var i = 0; i < radialSegments; i++) {
-					// if(i == radialSegments - 1) {
-					//     indices.push(
-					//         begin1, begin1 + i, begin2 + i,
-					//         begin2, begin1, begin2 + i
-					//     );
-					// } else {
 					indices.push(
 						begin2 + i, begin1 + i, begin1 + i + 1,
 						begin2 + i, begin1 + i + 1, begin2 + i + 1
 					);
-					// }
 
 					count += 6;
 				}

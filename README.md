@@ -3,42 +3,29 @@ three.path
 
 three.path is a three.js extension which provides a 3D path geometry builder.
 
-usage
-===================
+### Usage
 
-### Path3D
-
-a helper class for path drawing
+##### Step1: Create PathPointList to preprocess and store points.
 
 ````javascript
 
-var path3D = new THREE.Path3D();
+var list = new THREE.PathPointList();
 
-// when begin a path
-path3D.start(); 
-
-// when mouse moving
-path3D.update(mouse.x, mouse.y); 
-
-// when drawing a point
-path3D.confirm(); 
-
-// when finish a path
-path3D.stop(); 
-
-// clear path
-// path3D.clear(); 
-
-// get the list
-var pathPointList = path3D.getPathPointList();
+/**
+ * set points
+ * @param {THREE.Vector3[]} points key points array
+ * @param {number} cornerRadius? the corner radius. set 0 to disable round corner. default is 0.1
+ * @param {number} cornerSplit? the corner split. default is 10.
+ * @param {number} up? force up. default is auto up (calculate by tangent).
+ * @param {boolean} close? close path. default is false.
+ */
+list.set(points, 0.1, 10);
 
 ````
 
-### PathGeometry
+##### Step2 Generate geometries
 
-![image](./examples/images/screenshot.png) 
-
-path geometry build from pathPointList. ->> [tube](https://shawn0326.github.io/three.path/examples/index.html)
+Generate PathGeometry.
 
 ````javascript
 
@@ -46,18 +33,15 @@ var geometry = new THREE.PathGeometry();
 
 // update geometry when pathPointList changed
 geometry.update(pathPointList, {
-    width: 0.3,
-    arrow: true,
-    progress: 1
+    width: 0.1, // default is 0.1
+    arrow: true, // default is true
+    progress: 1, // default is 1
+    side: "both" // "left"/"right"/"both", default is "both"
 });
 
 ````
 
-### PathTubeGeometry
-
-![image](./examples/images/screenshot2.png) 
-
-path tube geometry build from pathPointList. ->> [tube](https://shawn0326.github.io/three.path/examples/tube.html)
+Or generate PathTubeGeometry.
 
 ````javascript
 
@@ -65,30 +49,43 @@ var geometry = new THREE.PathTubeGeometry();
 
 // update geometry when pathPointList changed
 geometry.update(pathPointList, {
-    radius: 0.1,
-    radialSegments: 10,
-    progress: 1
+    radius: 0.1, // default is 0.1
+    radialSegments: 8, // default is 8
+    progress: 1, // default is 1
+    startRad: 0 // default is 0
 });
 
 ````
 
-demo
-===================
+### demo
 
-![image](./examples/images/screenshot3.png) 
+##### draw path
+
+path geometry build from pathPointList. ->> [tube](https://shawn0326.github.io/three.path/examples/index.html)
+
+![image](./examples/images/screenshot.png) 
+
+##### tube
+
+path tube geometry build from pathPointList. ->> [tube](https://shawn0326.github.io/three.path/examples/tube.html)
+
+![image](./examples/images/screenshot2.png) 
+
+##### city
 
 [City](https://shawn0326.github.io/three.path/examples/city.html)
 
-build
-===================
+![image](./examples/images/screenshot3.png) 
 
-### first run
+### build
+
+##### first run
 
 ````
 npm install
 ````
 
-### build
+##### build
 
 ````
 npm run b

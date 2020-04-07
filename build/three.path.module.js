@@ -276,168 +276,6 @@ PathPointList.prototype._getCornerBezierCurve = function(last, current, next, co
 };
 
 /**
- * Path3D
- * helper class for path drawing
- */
-var Path3D = function() {
-	this._drawing = false;
-	this._includeDrawingPoint = false;
-
-	this._points = [];
-
-	this._lastPoint = new THREE.Vector3();
-	this._lastFixedPoint = new THREE.Vector3();
-
-	this.fixRadius = 0.5;
-	this.height = 0.1;
-
-	this._cornerRadius = 0.2;
-	this._cornerSplit = 10;
-
-	this._pathPointList = new PathPointList();
-
-	this._dirty = true;
-
-	this.up = new THREE.Vector3(0, 1, 0); // force up
-};
-
-Object.defineProperty(Path3D.prototype, "cornerRadius", {
-
-	set: function (value) {
-		this._cornerRadius = value;
-		this._dirty = true;
-	},
-
-	get: function() {
-		return this._cornerRadius;
-	}
-
-});
-
-Object.defineProperty(Path3D.prototype, "cornerSplit", {
-
-	set: function (value) {
-		this._cornerSplit = value;
-		this._dirty = true;
-	},
-
-	get: function() {
-		return this._cornerSplit;
-	}
-
-});
-
-Path3D.prototype.getPoints = function() {
-	if (this._includeDrawingPoint) {
-		this._points.pop();
-		this._includeDrawingPoint = false;
-	}
-
-	if (this._drawing && this._points.length > 0) {
-		var fixedPoint = this._getLastFixedPoint();
-
-		if (fixedPoint) {
-			this._points.push(fixedPoint);
-			this._includeDrawingPoint = true;
-		}
-	}
-
-	return this._points;
-};
-
-Path3D.prototype.getPathPointList = function() {
-	if (this._drawing || this._dirty) {
-		this._pathPointList.set(this.getPoints(), this._cornerRadius, this._cornerSplit, this.up);
-		this._dirty = false;
-	}
-
-	return this._pathPointList;
-};
-
-Path3D.prototype.update = function(point) {
-	this._lastPoint.copy(point);
-	this._lastPoint.y += this.height;
-};
-
-Path3D.prototype.confirm = function() {
-	this._drawing = true;
-
-	var fixedPoint = this._getLastFixedPoint();
-
-	if (fixedPoint) {
-		if (this._includeDrawingPoint) {
-			this._points.pop();
-			this._includeDrawingPoint = false;
-		}
-
-		this._points.push(fixedPoint.clone());
-	}
-
-	this._dirty = true;
-};
-
-Path3D.prototype.start = function() {
-	this._drawing = true;
-
-	this._dirty = true;
-};
-
-Path3D.prototype.stop = function() {
-	this._drawing = false;
-
-	this._dirty = true;
-};
-
-Path3D.prototype.clear = function() {
-	this._drawing = false;
-	this._includeDrawingPoint = false;
-
-	this._points = [];
-
-	this._dirty = true;
-};
-
-var measureVec3 = new THREE.Vector3();
-function measureVec3Length(v1, v2) {
-	return measureVec3.copy(v2).sub(v1).length();
-}
-var lastDir = new THREE.Vector3();
-var nextDir = new THREE.Vector3();
-
-// 返回实际绘制点，如果鼠标在不合法的绘制范围内，则返回一个null
-Path3D.prototype._getLastFixedPoint = function() {
-	this._lastFixedPoint.copy(this._lastPoint);
-
-	if (this._points.length > 0) {
-		var lastConfirmedPoint = this._includeDrawingPoint ? this._points[this._points.length - 2] : this._points[this._points.length - 1];
-
-		// fix radius
-		if (measureVec3Length(lastConfirmedPoint, this._lastFixedPoint) < this.fixRadius) {
-			measureVec3.normalize().multiplyScalar(this.fixRadius);
-			this._lastFixedPoint.copy(lastConfirmedPoint).add(measureVec3);
-		}
-
-		var hasCorner = this._includeDrawingPoint ? (this._points.length > 2) : (this._points.length > 1);
-		if (hasCorner) {
-			var lastConfirmedPoint2 = this._includeDrawingPoint ? this._points[this._points.length - 3] : this._points[this._points.length - 2];
-
-			lastDir.subVectors(lastConfirmedPoint, lastConfirmedPoint2);
-			nextDir.subVectors(this._lastFixedPoint, lastConfirmedPoint);
-
-			lastDir.normalize();
-			nextDir.normalize();
-
-			var _cos = lastDir.multiplyScalar(-1).dot(nextDir);
-			if (_cos > 0.99) { // 角度非常小的极限情况，将导致贝塞尔bug
-				return null;
-			}
-		}
-	}
-
-	return this._lastFixedPoint;
-};
-
-/**
  * PathGeometry
  * need drawtype THREE.TriangleStripDrawMode
  */
@@ -458,6 +296,8 @@ var PathGeometry = function(maxVertex) {
 
 	this.drawRange.start = 0;
 	this.drawRange.count = 0;
+
+	this.setIndex(new Array(maxVertex * 2));
 };
 
 PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.prototype), {
@@ -465,10 +305,10 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 	constructor: PathGeometry,
 
 	/**
-     * update geometry by PathPointList instance
-     * @param {PathPointList} pathPointList
-     * @param {Object} options
-     */
+	 * update geometry by PathPointList instance
+	 * @param {PathPointList} pathPointList
+	 * @param {Object} options
+	 */
 	update: function(pathPointList, options) {
 		// update attributes
 		options = options || {};
@@ -496,6 +336,20 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 		}
 	},
 
+	_resizeIndex: function(index, len) {
+		while (index.array.length < len) {
+			var oldLength = index.array.length;
+			var newIndex = new THREE.BufferAttribute(
+				oldLength * 2 > 65535 ? new Uint32Array(oldLength * 2) : new Uint16Array(oldLength * 2),
+				1
+			);
+			newIndex.name = index.name;
+			newIndex.usage = index.usage;
+			this.setIndex(newIndex);
+			index = newIndex;
+		}
+	},
+
 	_updateAttributes: function(pathPointList, options) {
 		var width = options.width || 0.1;
 		var progress = options.progress !== undefined ? options.progress : 1;
@@ -508,10 +362,14 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 		var position = [];
 		var normal = [];
 		var uv = [];
+		var indices = [];
+		var verticesCount = 0;
 
 		var right = new THREE.Vector3();
 		var left = new THREE.Vector3();
 		function addVertices(pathPoint, halfWidth, uvDist) {
+			var first = position.length === 0;
+
 			var dir = pathPoint.dir;
 			var up = pathPoint.up;
 			var _right = pathPoint.right;
@@ -546,7 +404,16 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 				uvDist, 1
 			);
 
-			count += 2;
+			verticesCount += 2;
+
+			if (!first) {
+				indices.push(
+					verticesCount - 2, verticesCount - 4, verticesCount - 3,
+					verticesCount - 2, verticesCount - 3, verticesCount - 1
+				);
+
+				count += 6;
+			}
 		}
 
 		var sharp = new THREE.Vector3();
@@ -593,6 +460,12 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 				uvDist + (halfWidth * 3 / (side !== "both" ? halfWidth : halfWidth * 2)), side !== "both" ? 0 : 0.5
 			);
 
+			verticesCount += 3;
+
+			indices.push(
+				verticesCount - 1, verticesCount - 3, verticesCount - 2
+			);
+
 			count += 3;
 		}
 
@@ -637,26 +510,32 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 		var positionAttribute = this.getAttribute('position');
 		var normalAttribute = this.getAttribute('normal');
 		var uvAttribute = this.getAttribute('uv');
+		var indexAttribute = this.getIndex();
 
 		this._resizeAttribute('position', positionAttribute, position.length);
 		this._resizeAttribute('normal', normalAttribute, normal.length);
 		this._resizeAttribute('uv', uvAttribute, uv.length);
+		this._resizeIndex(indexAttribute, indices.length);
 
 		positionAttribute = this.getAttribute('position');
 		normalAttribute = this.getAttribute('normal');
 		uvAttribute = this.getAttribute('uv');
+		indexAttribute = this.getIndex();
 
 		positionAttribute.array.set(position, 0);
 		normalAttribute.array.set(normal, 0);
 		uvAttribute.array.set(uv, 0);
+		indexAttribute.set(indices, 0);
 
 		positionAttribute.updateRange.count = position.length;
 		normalAttribute.updateRange.count = normal.length;
 		uvAttribute.updateRange.count = uv.length;
+		indexAttribute.updateRange.count = indices.length;
 
 		positionAttribute.needsUpdate = true;
 		normalAttribute.needsUpdate = true;
 		uvAttribute.needsUpdate = true;
+		indexAttribute.needsUpdate = true;
 
 		return count;
 	}
@@ -668,32 +547,15 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
  */
 var PathTubeGeometry = function(maxVertex) {
 	PathGeometry.call(this, maxVertex || 1000);
-
-	this.setIndex(new Array((maxVertex || 1000) * 2));
 };
 
 PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype), {
 
 	constructor: PathTubeGeometry,
 
-	_resizeIndex: function(index, len) {
-		while (index.array.length < len) {
-			var oldLength = index.array.length;
-			var newIndex = new THREE.BufferAttribute(
-				oldLength * 2 > 65535 ? new Uint32Array(oldLength * 2) : new Uint16Array(oldLength * 2),
-				1
-			);
-			newIndex.name = index.name;
-			newIndex.usage = index.usage;
-			this.setIndex(newIndex);
-			index = newIndex;
-		}
-	},
-
 	_updateAttributes: function(pathPointList, options) {
 		var radius = options.radius || 0.1;
-		var radialSegments = options.radialSegments || 8;
-		radialSegments = Math.max(2, radialSegments);
+		var radialSegments = Math.max(2, options.radialSegments || 8);
 		var startRad = options.startRad || 0;
 		var progress = options.progress !== undefined ? options.progress : 1;
 
@@ -729,17 +591,10 @@ PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype)
 				var begin2 = verticesCount - (radialSegments + 1);
 
 				for (var i = 0; i < radialSegments; i++) {
-					// if(i == radialSegments - 1) {
-					//     indices.push(
-					//         begin1, begin1 + i, begin2 + i,
-					//         begin2, begin1, begin2 + i
-					//     );
-					// } else {
 					indices.push(
 						begin2 + i, begin1 + i, begin1 + i + 1,
 						begin2 + i, begin1 + i + 1, begin2 + i + 1
 					);
-					// }
 
 					count += 6;
 				}
@@ -809,4 +664,4 @@ PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype)
 
 });
 
-export { Path3D, PathPointList, PathGeometry, PathTubeGeometry };
+export { PathPointList, PathGeometry, PathTubeGeometry };

@@ -1,5 +1,3 @@
-import { PathPointList } from './PathPointList.js';
-
 /**
  * Path3D
  * helper class for path drawing
@@ -19,7 +17,7 @@ var Path3D = function() {
 	this._cornerRadius = 0.2;
 	this._cornerSplit = 10;
 
-	this._pathPointList = new PathPointList();
+	this._pathPointList = new THREE.PathPointList();
 
 	this._dirty = true;
 
@@ -161,6 +159,4 @@ Path3D.prototype._getLastFixedPoint = function() {
 
 	return this._lastFixedPoint;
 }
-
-export { Path3D };
 

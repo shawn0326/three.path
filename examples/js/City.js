@@ -140,7 +140,6 @@ City.prototype = Object.assign(City.prototype, {
             var geometry = geometries[Math.ceil(Math.random() * geoLength)];
             if(geometry) {
                 var mesh = new THREE.Mesh(geometry, material);
-                mesh.drawMode = THREE.TriangleStripDrawMode;
                 areas[i].getCenter(center);
                 mesh.position.x = center.x;
                 mesh.position.y = 0;
