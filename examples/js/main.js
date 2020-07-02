@@ -64,7 +64,8 @@ window.onload = function() {
     });
     material.map = texture;
     
-    var line = new THREE.Mesh(geometry, material);
+    line = new THREE.Mesh(geometry, material);
+    line.frustumCulled = false;
     scene.add(line);
 
     var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, side: "both", cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};
@@ -74,6 +75,7 @@ window.onload = function() {
         material.map = val ? texture : null;
         material.needsUpdate = true;
     });
+    gui.add( material, 'wireframe');
     gui.addColor(params, "color").onChange(function(value) {
         material.color.r = value[0] / 255;
         material.color.g = value[1] / 255;

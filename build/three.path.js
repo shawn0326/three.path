@@ -157,18 +157,19 @@
 			var samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
 
 			for (var f = 0; f < cornerSplit; f += 1) {
-				this._hardCorner(samplerPoints[f], samplerPoints[f + 1], up);
+				this._hardCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
 			}
 
 			if (!samplerPoints[cornerSplit].equals(next)) {
-				this._hardCorner(samplerPoints[cornerSplit], next, up);
+				this._hardCorner(samplerPoints[cornerSplit], next, up, 2);
 			}
 		} else {
 			this._hardCorner(current, next, up);
 		}
 	};
 
-	PathPointList.prototype._hardCorner = function(current, next, up) {
+	// dirType: 0 - use middle dir / 1 - use last dir / 2- use next dir
+	PathPointList.prototype._hardCorner = function(current, next, up, dirType) {
 		var lastPoint = this.array[this.count - 1];
 		var point = this._getByIndex(this.count);
 
@@ -181,8 +182,17 @@
 		nextDir.normalize();
 
 		point.pos.copy(current);
-		point.dir.addVectors(lastDir, nextDir);
-		point.dir.normalize();
+
+		if (dirType) {
+			if (dirType === 1) {
+				point.dir.copy(lastDir);
+			} else if (dirType === 2) {
+				point.dir.copy(nextDir);
+			}
+		} else {
+			point.dir.addVectors(lastDir, nextDir);
+			point.dir.normalize();
+		}
 
 		if (up) {
 			if (point.dir.dot(up) === 1) {
