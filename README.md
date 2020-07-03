@@ -3,6 +3,10 @@ three.path
 
 three.path is a three.js extension which provides a 3D path geometry builder.
 
+![image](./examples/images/screenshot4.png)
+
+![image](./examples/images/screenshot5.png)
+
 ### Usage
 
 ##### Step1: Create PathPointList to preprocess and store points.

@@ -98,6 +98,7 @@ PathPointList.prototype._start = function(current, next, up) {
 	point.up.crossVectors(point.right, point.dir).normalize();
 	point.dist = 0;
 	point.widthScale = 1;
+	point.sharp = false;
 
 	point.dir.normalize();
 
@@ -117,19 +118,19 @@ PathPointList.prototype._corner = function(current, next, cornerRadius, cornerSp
 		var samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
 
 		for (var f = 0; f < cornerSplit; f += 1) {
-			this._hardCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
+			this._sharpCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
 		}
 
 		if (!samplerPoints[cornerSplit].equals(next)) {
-			this._hardCorner(samplerPoints[cornerSplit], next, up, 2);
+			this._sharpCorner(samplerPoints[cornerSplit], next, up, 2);
 		}
 	} else {
-		this._hardCorner(current, next, up);
+		this._sharpCorner(current, next, up, 0, true);
 	}
 }
 
 // dirType: 0 - use middle dir / 1 - use last dir / 2- use next dir
-PathPointList.prototype._hardCorner = function(current, next, up, dirType) {
+PathPointList.prototype._sharpCorner = function(current, next, up, dirType, sharp) {
 	var lastPoint = this.array[this.count - 1];
 	var point = this._getByIndex(this.count);
 
@@ -177,7 +178,9 @@ PathPointList.prototype._hardCorner = function(current, next, up, dirType) {
 	point.dist = lastPoint.dist + lastDirLength;
 
 	var _cos = lastDir.dot(nextDir);
-	point.widthScale = Math.min(1 / Math.sqrt((1 + _cos) / 2), 1.414213562373) || 1;
+	point.widthScale = Math.min(1 / Math.sqrt((1 + _cos) / 2), 1.415) || 1;
+	point.sharp = (Math.abs(_cos - 1) > 0.05) && sharp;
+	// point.sharp = sharp || false;
 
 	// for sharp corner
 	// if(point.widthScale > 1.414213562373) {
@@ -210,6 +213,7 @@ PathPointList.prototype._end = function(current) {
 
 	point.dist = lastPoint.dist + dist;
 	point.widthScale = 1;
+	point.sharp = false;
 
 	this.count++;
 }

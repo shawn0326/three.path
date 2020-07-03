@@ -103,7 +103,7 @@ City.prototype = Object.assign(City.prototype, {
             }
 
             var pathPointList = new THREE.PathPointList();
-            pathPointList.set(points, 0.3, 10, new THREE.Vector3(0, 1, 0));
+            pathPointList.set(points, 0, 0, new THREE.Vector3(0, 1, 0));
             var geometry = new THREE.PathGeometry();
             geometry._pathPointList = pathPointList;
             geometry._updateParam = {

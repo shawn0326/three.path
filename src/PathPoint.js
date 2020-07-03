@@ -13,6 +13,8 @@ var PathPoint = function() {
 	this.dist = 0; // distance from start
 
 	this.widthScale = 1;
+
+	this.sharp = false; // marks as sharp corner
 }
 
 PathPoint.prototype.lerpPathPoints = function(p1, p2, alpha) {

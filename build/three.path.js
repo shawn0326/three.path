@@ -20,6 +20,8 @@
 		this.dist = 0; // distance from start
 
 		this.widthScale = 1;
+
+		this.sharp = false; // marks as sharp corner
 	};
 
 	PathPoint.prototype.lerpPathPoints = function(p1, p2, alpha) {
@@ -138,6 +140,7 @@
 		point.up.crossVectors(point.right, point.dir).normalize();
 		point.dist = 0;
 		point.widthScale = 1;
+		point.sharp = false;
 
 		point.dir.normalize();
 
@@ -157,19 +160,19 @@
 			var samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
 
 			for (var f = 0; f < cornerSplit; f += 1) {
-				this._hardCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
+				this._sharpCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
 			}
 
 			if (!samplerPoints[cornerSplit].equals(next)) {
-				this._hardCorner(samplerPoints[cornerSplit], next, up, 2);
+				this._sharpCorner(samplerPoints[cornerSplit], next, up, 2);
 			}
 		} else {
-			this._hardCorner(current, next, up);
+			this._sharpCorner(current, next, up, 0, true);
 		}
 	};
 
 	// dirType: 0 - use middle dir / 1 - use last dir / 2- use next dir
-	PathPointList.prototype._hardCorner = function(current, next, up, dirType) {
+	PathPointList.prototype._sharpCorner = function(current, next, up, dirType, sharp) {
 		var lastPoint = this.array[this.count - 1];
 		var point = this._getByIndex(this.count);
 
@@ -217,7 +220,9 @@
 		point.dist = lastPoint.dist + lastDirLength;
 
 		var _cos = lastDir.dot(nextDir);
-		point.widthScale = Math.min(1 / Math.sqrt((1 + _cos) / 2), 1.414213562373) || 1;
+		point.widthScale = Math.min(1 / Math.sqrt((1 + _cos) / 2), 1.415) || 1;
+		point.sharp = (Math.abs(_cos - 1) > 0.05) && sharp;
+		// point.sharp = sharp || false;
 
 		// for sharp corner
 		// if(point.widthScale > 1.414213562373) {
@@ -250,6 +255,7 @@
 
 		point.dist = lastPoint.dist + dist;
 		point.widthScale = 1;
+		point.sharp = false;
 
 		this.count++;
 	};
@@ -382,8 +388,16 @@
 
 			var right = new THREE.Vector3();
 			var left = new THREE.Vector3();
+
+			// for sharp corners
+			var leftOffset = new THREE.Vector3();
+			var rightOffset = new THREE.Vector3();
+			var tempPoint1 = new THREE.Vector3();
+			var tempPoint2 = new THREE.Vector3();
+
 			function addVertices(pathPoint, halfWidth, uvDist) {
 				var first = position.length === 0;
+				var sharpCorner = pathPoint.sharp && !first;
 
 				var dir = pathPoint.dir;
 				var up = pathPoint.up;
@@ -404,30 +418,121 @@
 				right.add(pathPoint.pos);
 				left.add(pathPoint.pos);
 
-				position.push(
-					left.x, left.y, left.z,
-					right.x, right.y, right.z
-				);
+				if (sharpCorner) {
+					leftOffset.fromArray(position, position.length - 6).sub(left);
+					rightOffset.fromArray(position, position.length - 3).sub(right);
 
-				normal.push(
-					up.x, up.y, up.z,
-					up.x, up.y, up.z
-				);
+					var leftDist = leftOffset.length();
+					var rightDist = rightOffset.length();
 
-				uv.push(
-					uvDist, 0,
-					uvDist, 1
-				);
+					var sideOffset = leftDist - rightDist;
+					var longerOffset, longEdge;
 
-				verticesCount += 2;
+					if (sideOffset > 0) {
+						longerOffset = leftOffset;
+						longEdge = left;
+					} else {
+						longerOffset = rightOffset;
+						longEdge = right;
+					}
 
-				if (!first) {
-					indices.push(
-						verticesCount - 2, verticesCount - 4, verticesCount - 3,
-						verticesCount - 2, verticesCount - 3, verticesCount - 1
+					tempPoint1.copy(longerOffset).setLength(Math.abs(sideOffset)).add(longEdge);
+
+					let _cos = tempPoint2.copy(longEdge).sub(tempPoint1).normalize().dot(dir);
+					let _len = tempPoint2.copy(longEdge).sub(tempPoint1).length();
+					let _dist = _cos * _len * 2;
+
+					tempPoint2.copy(dir).setLength(_dist).add(tempPoint1);
+
+					if (sideOffset > 0) {
+						position.push(
+							tempPoint1.x, tempPoint1.y, tempPoint1.z, // 6
+							right.x, right.y, right.z, // 5
+							left.x, left.y, left.z, // 4
+							right.x, right.y, right.z, // 3
+							tempPoint2.x, tempPoint2.y, tempPoint2.z, // 2
+							right.x, right.y, right.z // 1
+						);
+
+						verticesCount += 6;
+
+						indices.push(
+							verticesCount - 6, verticesCount - 8, verticesCount - 7,
+							verticesCount - 6, verticesCount - 7, verticesCount - 5,
+
+							verticesCount - 4, verticesCount - 6, verticesCount - 5,
+							verticesCount - 2, verticesCount - 4, verticesCount - 1
+						);
+
+						count += 12;
+					} else {
+						position.push(
+							left.x, left.y, left.z, // 6
+							tempPoint1.x, tempPoint1.y, tempPoint1.z, // 5
+							left.x, left.y, left.z, // 4
+							right.x, right.y, right.z, // 3
+							left.x, left.y, left.z, // 2
+							tempPoint2.x, tempPoint2.y, tempPoint2.z // 1
+						);
+
+						verticesCount += 6;
+
+						indices.push(
+							verticesCount - 6, verticesCount - 8, verticesCount - 7,
+							verticesCount - 6, verticesCount - 7, verticesCount - 5,
+
+							verticesCount - 6, verticesCount - 5, verticesCount - 3,
+							verticesCount - 2, verticesCount - 3, verticesCount - 1
+						);
+
+						count += 12;
+					}
+
+					normal.push(
+						up.x, up.y, up.z,
+						up.x, up.y, up.z,
+						up.x, up.y, up.z,
+						up.x, up.y, up.z,
+						up.x, up.y, up.z,
+						up.x, up.y, up.z
 					);
 
-					count += 6;
+					let uvOffset = halfWidth / (side !== "both" ? width / 2 : width);
+
+					uv.push(
+						uvDist - uvOffset, 0,
+						uvDist - uvOffset, 1,
+						uvDist, 0,
+						uvDist, 1,
+						uvDist + uvOffset, 0,
+						uvDist + uvOffset, 1
+					);
+				} else {
+					position.push(
+						left.x, left.y, left.z,
+						right.x, right.y, right.z
+					);
+
+					normal.push(
+						up.x, up.y, up.z,
+						up.x, up.y, up.z
+					);
+
+					uv.push(
+						uvDist, 0,
+						uvDist, 1
+					);
+
+					verticesCount += 2;
+
+					if (!first) {
+						indices.push(
+							verticesCount - 2, verticesCount - 4, verticesCount - 3,
+							verticesCount - 2, verticesCount - 3, verticesCount - 1
+						);
+
+						count += 6;
+					}
 				}
 			}
 
@@ -450,8 +555,6 @@
 				}
 
 				sharp.copy(dir).setLength(halfWidth * 3);
-
-				// TODO calculate up dir
 
 				right.add(pathPoint.pos);
 				left.add(pathPoint.pos);

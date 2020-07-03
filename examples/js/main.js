@@ -50,10 +50,20 @@ window.onload = function() {
 
     var geometry = new THREE.PathGeometry(128);
 
-    var texture = new THREE.TextureLoader().load( 'images/diffuse.jpg', function( texture ) {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    });
+    var textureMap = new Map();
+    function getTexture(url) {
+        if (textureMap.has(url)) {
+            return textureMap.get(url);
+        } else {
+            var texture = new THREE.TextureLoader().load(url, function( texture ) {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            });
+            textureMap.set(url, texture);
+        }
+    }
+    getTexture('images/diffuse.jpg');
+    getTexture('images/light.png');
 
     var material = new THREE.MeshBasicMaterial({
         color : 0x58DEDE, 
@@ -62,20 +72,25 @@ window.onload = function() {
         opacity: 0.9,
         side: THREE.DoubleSide
     });
-    material.map = texture;
+    material.map = getTexture('images/diffuse.jpg');
     
     line = new THREE.Mesh(geometry, material);
     line.frustumCulled = false;
     scene.add(line);
 
-    var params = {useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, side: "both", cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};
+    var params = {texture: 'images/diffuse.jpg', color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, width: 0.3, side: "both", cornerRadius: 0.2, cornerSplit: 10, progress: 1, playSpeed: 0.14};
     var gui = new dat.GUI();
 
-    gui.add( params, 'useTexture').onChange(function(val) {
-        material.map = val ? texture : null;
+    gui.add( params, 'texture', ['none', 'images/diffuse.jpg', 'images/light.png']).onChange(function(val) {
+        if (val === 'none') {
+            material.map = null;
+        } else {
+            material.map = getTexture(val);
+        }
         material.needsUpdate = true;
     });
     gui.add( material, 'wireframe');
+    gui.add( material, 'depthWrite');
     gui.addColor(params, "color").onChange(function(value) {
         material.color.r = value[0] / 255;
         material.color.g = value[1] / 255;
@@ -164,9 +179,9 @@ window.onload = function() {
             
         }
 
-        if(params.scrollUV) {
-            texture.offset.x -= params.scrollSpeed;
-            texture.repeat.x = 1;
+        if(params.scrollUV && material.map) {
+            material.map.offset.x -= params.scrollSpeed;
+            material.map.repeat.x = 1;
         }
     
         renderer.render( scene, camera );

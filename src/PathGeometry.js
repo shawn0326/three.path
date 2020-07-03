@@ -91,8 +91,16 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 
 		var right = new THREE.Vector3();
 		var left = new THREE.Vector3();
+
+		// for sharp corners
+		var leftOffset = new THREE.Vector3();
+		var rightOffset = new THREE.Vector3();
+		var tempPoint1 = new THREE.Vector3();
+		var tempPoint2 = new THREE.Vector3();
+
 		function addVertices(pathPoint, halfWidth, uvDist) {
 			var first = position.length === 0;
+			var sharpCorner = pathPoint.sharp && !first;
 
 			var dir = pathPoint.dir;
 			var up = pathPoint.up;
@@ -113,30 +121,121 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			right.add(pathPoint.pos);
 			left.add(pathPoint.pos);
 
-			position.push(
-				left.x, left.y, left.z,
-				right.x, right.y, right.z
-			);
+			if (sharpCorner) {
+				leftOffset.fromArray(position, position.length - 6).sub(left);
+				rightOffset.fromArray(position, position.length - 3).sub(right);
 
-			normal.push(
-				up.x, up.y, up.z,
-				up.x, up.y, up.z
-			);
+				var leftDist = leftOffset.length();
+				var rightDist = rightOffset.length();
 
-			uv.push(
-				uvDist, 0,
-				uvDist, 1
-			);
+				var sideOffset = leftDist - rightDist;
+				var longerOffset, longEdge;
 
-			verticesCount += 2;
+				if (sideOffset > 0) {
+					longerOffset = leftOffset;
+					longEdge = left;
+				} else {
+					longerOffset = rightOffset;
+					longEdge = right;
+				}
 
-			if (!first) {
-				indices.push(
-					verticesCount - 2, verticesCount - 4, verticesCount - 3,
-					verticesCount - 2, verticesCount - 3, verticesCount - 1
+				tempPoint1.copy(longerOffset).setLength(Math.abs(sideOffset)).add(longEdge);
+
+				let _cos = tempPoint2.copy(longEdge).sub(tempPoint1).normalize().dot(dir);
+				let _len = tempPoint2.copy(longEdge).sub(tempPoint1).length();
+				let _dist = _cos * _len * 2;
+
+				tempPoint2.copy(dir).setLength(_dist).add(tempPoint1);
+
+				if (sideOffset > 0) {
+					position.push(
+						tempPoint1.x, tempPoint1.y, tempPoint1.z, // 6
+						right.x, right.y, right.z, // 5
+						left.x, left.y, left.z, // 4
+						right.x, right.y, right.z, // 3
+						tempPoint2.x, tempPoint2.y, tempPoint2.z, // 2
+						right.x, right.y, right.z // 1
+					);
+
+					verticesCount += 6;
+
+					indices.push(
+						verticesCount - 6, verticesCount - 8, verticesCount - 7,
+						verticesCount - 6, verticesCount - 7, verticesCount - 5,
+
+						verticesCount - 4, verticesCount - 6, verticesCount - 5,
+						verticesCount - 2, verticesCount - 4, verticesCount - 1
+					);
+
+					count += 12;
+				} else {
+					position.push(
+						left.x, left.y, left.z, // 6
+						tempPoint1.x, tempPoint1.y, tempPoint1.z, // 5
+						left.x, left.y, left.z, // 4
+						right.x, right.y, right.z, // 3
+						left.x, left.y, left.z, // 2
+						tempPoint2.x, tempPoint2.y, tempPoint2.z // 1
+					);
+
+					verticesCount += 6;
+
+					indices.push(
+						verticesCount - 6, verticesCount - 8, verticesCount - 7,
+						verticesCount - 6, verticesCount - 7, verticesCount - 5,
+
+						verticesCount - 6, verticesCount - 5, verticesCount - 3,
+						verticesCount - 2, verticesCount - 3, verticesCount - 1
+					);
+
+					count += 12;
+				}
+
+				normal.push(
+					up.x, up.y, up.z,
+					up.x, up.y, up.z,
+					up.x, up.y, up.z,
+					up.x, up.y, up.z,
+					up.x, up.y, up.z,
+					up.x, up.y, up.z
 				);
 
-				count += 6;
+				let uvOffset = halfWidth / (side !== "both" ? width / 2 : width);
+
+				uv.push(
+					uvDist - uvOffset, 0,
+					uvDist - uvOffset, 1,
+					uvDist, 0,
+					uvDist, 1,
+					uvDist + uvOffset, 0,
+					uvDist + uvOffset, 1
+				);
+			} else {
+				position.push(
+					left.x, left.y, left.z,
+					right.x, right.y, right.z
+				);
+
+				normal.push(
+					up.x, up.y, up.z,
+					up.x, up.y, up.z
+				);
+
+				uv.push(
+					uvDist, 0,
+					uvDist, 1
+				);
+
+				verticesCount += 2;
+
+				if (!first) {
+					indices.push(
+						verticesCount - 2, verticesCount - 4, verticesCount - 3,
+						verticesCount - 2, verticesCount - 3, verticesCount - 1
+					);
+
+					count += 6;
+				}
 			}
 		}
 
@@ -159,8 +258,6 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			}
 
 			sharp.copy(dir).setLength(halfWidth * 3);
-
-			// TODO calculate up dir
 
 			right.add(pathPoint.pos);
 			left.add(pathPoint.pos);

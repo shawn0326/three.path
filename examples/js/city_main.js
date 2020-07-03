@@ -2,7 +2,7 @@ window.onload = function() {
 
     var scene = new THREE.Scene();
     scene.background = new THREE.Color(0, 0, 0);
-    var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 1000 );
+    var camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, .1, 1000 );
     camera.position.set( 30, 40, 50 );
 
     var renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true });
