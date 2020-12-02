@@ -318,7 +318,7 @@
 		this.drawRange.start = 0;
 		this.drawRange.count = 0;
 
-		this.setIndex(new Array(maxVertex * 2));
+		this.setIndex(new Array(maxVertex * 3));
 	};
 
 	PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.prototype), {
