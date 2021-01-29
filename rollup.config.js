@@ -1,25 +1,47 @@
-const INDENT = '\t';
-const BANNER = '/* https://github.com/shawn0326/three.path */';
+import { terser } from 'rollup-plugin-terser';
 
-export default {
-	input: 'src/main.js',
-	plugins: [
-	],
-	// sourceMap: true,
-	output: [
-		{
+function header() {
+	return {
+		renderChunk(code) {
+			return '// https://github.com/shawn0326/three.path\n' + code;
+		}
+	};
+}
+
+export default [
+	{
+		input: 'src/main.js',
+		plugins: [
+			header()
+		],
+		output: {
 			format: 'umd',
 			file: 'build/three.path.js',
-			indent: INDENT,
-			banner: BANNER,
 			name: 'THREE',
 			extend: true
-		},
-		{
-			format: 'es',
-			file: 'build/three.path.module.js',
-			indent: INDENT,
-			banner: BANNER
 		}
-	]
-};
+	},
+	{
+		input: 'src/main.js',
+		plugins: [
+			terser(),
+			header()
+		],
+		output: {
+			format: 'umd',
+			file: 'build/three.path.min.js',
+			name: 'THREE',
+			extend: true
+		}
+	},
+	{
+		input: 'src/main.js',
+		plugins: [
+			header()
+		],
+		output: {
+			format: 'esm',
+			file: 'build/three.path.module.js'
+		}
+	}
+];

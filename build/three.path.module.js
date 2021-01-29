@@ -1,4 +1,4 @@
-/* https://github.com/shawn0326/three.path */
+// https://github.com/shawn0326/three.path
 /**
  * PathPoint
  */
@@ -776,4 +776,4 @@ PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype)
 
 });
 
-export { PathPointList, PathGeometry, PathTubeGeometry };
+export { PathGeometry, PathPointList, PathTubeGeometry };

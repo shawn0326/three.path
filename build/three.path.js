@@ -1,8 +1,8 @@
-/* https://github.com/shawn0326/three.path */
+// https://github.com/shawn0326/three.path
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.THREE = global.THREE || {})));
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.THREE = global.THREE || {}));
 }(this, (function (exports) { 'use strict';
 
 	/**
@@ -782,8 +782,8 @@
 
 	});
 
-	exports.PathPointList = PathPointList;
 	exports.PathGeometry = PathGeometry;
+	exports.PathPointList = PathPointList;
 	exports.PathTubeGeometry = PathTubeGeometry;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
