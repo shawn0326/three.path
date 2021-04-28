@@ -300,7 +300,7 @@
 	/**
 	 * PathGeometry
 	 */
-	var PathGeometry = function(maxVertex) {
+	var PathGeometry = function(maxVertex, generateUv2) {
 		THREE.BufferGeometry.call(this);
 
 		maxVertex = maxVertex || 3000;
@@ -309,10 +309,16 @@
 			this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
 			this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
 			this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
-		} else {
+			if (generateUv2) {
+				this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+			}
+		} else { // for old three.js
 			this.addAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
 			this.addAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
 			this.addAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
+			if (generateUv2) {
+				this.addAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
+			}
 		}
 
 		this.drawRange.start = 0;
@@ -377,12 +383,25 @@
 			var arrow = options.arrow !== undefined ? options.arrow : true;
 			var side = options.side !== undefined ? options.side : "both";
 
+			var halfWidth = width / 2;
+			var sideWidth = (side !== "both" ? width / 2 : width);
+			var totalDistance = pathPointList.distance();
+			var progressDistance = progress * totalDistance;
+			if (totalDistance == 0) {
+				return 0;
+			}
+			var sharpUvOffset = halfWidth / sideWidth;
+			var sharpUvOffset2 = halfWidth / totalDistance;
+
+			var generateUv2 = !!this.getAttribute('uv2');
+
 			var count = 0;
 
 			// modify data
 			var position = [];
 			var normal = [];
 			var uv = [];
+			var uv2 = [];
 			var indices = [];
 			var verticesCount = 0;
 
@@ -395,9 +414,12 @@
 			var tempPoint1 = new THREE.Vector3();
 			var tempPoint2 = new THREE.Vector3();
 
-			function addVertices(pathPoint, halfWidth, uvDist) {
+			function addVertices(pathPoint) {
 				var first = position.length === 0;
 				var sharpCorner = pathPoint.sharp && !first;
+
+				var uvDist = pathPoint.dist / sideWidth;
+				var uvDist2 = pathPoint.dist / totalDistance;
 
 				var dir = pathPoint.dir;
 				var up = pathPoint.up;
@@ -497,16 +519,25 @@
 						up.x, up.y, up.z
 					);
 
-					let uvOffset = halfWidth / (side !== "both" ? width / 2 : width);
-
 					uv.push(
-						uvDist - uvOffset, 0,
-						uvDist - uvOffset, 1,
+						uvDist - sharpUvOffset, 0,
+						uvDist - sharpUvOffset, 1,
 						uvDist, 0,
 						uvDist, 1,
-						uvDist + uvOffset, 0,
-						uvDist + uvOffset, 1
+						uvDist + sharpUvOffset, 0,
+						uvDist + sharpUvOffset, 1
 					);
+
+					if (generateUv2) {
+						uv2.push(
+							uvDist2 - sharpUvOffset2, 0,
+							uvDist2 - sharpUvOffset2, 1,
+							uvDist2, 0,
+							uvDist2, 1,
+							uvDist2 + sharpUvOffset2, 0,
+							uvDist2 + sharpUvOffset2, 1
+						);
+					}
 				} else {
 					position.push(
 						left.x, left.y, left.z,
@@ -523,6 +554,13 @@
 						uvDist, 1
 					);
 
+					if (generateUv2) {
+						uv2.push(
+							uvDist2, 0,
+							uvDist2, 1
+						);
+					}
+
 					verticesCount += 2;
 
 					if (!first) {
@@ -537,10 +575,13 @@
 			}
 
 			var sharp = new THREE.Vector3();
-			function addStart(pathPoint, halfWidth, uvDist) {
+			function addStart(pathPoint) {
 				var dir = pathPoint.dir;
 				var up = pathPoint.up;
 				var _right = pathPoint.right;
+
+				var uvDist = pathPoint.dist / sideWidth;
+				var uvDist2 = pathPoint.dist / totalDistance;
 
 				if (side !== "left") {
 					right.copy(_right).multiplyScalar(halfWidth * 2);
@@ -575,8 +616,16 @@
 				uv.push(
 					uvDist, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
 					uvDist, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
-					uvDist + (halfWidth * 3 / (side !== "both" ? halfWidth : halfWidth * 2)), side !== "both" ? 0 : 0.5
+					uvDist + 1.5, side !== "both" ? 0 : 0.5
 				);
+
+				if (generateUv2) {
+					uv2.push(
+						uvDist2, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
+						uvDist2, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
+						uvDist2 + (1.5 * width / totalDistance), side !== "both" ? 0 : 0.5
+					);
+				}
 
 				verticesCount += 3;
 
@@ -587,14 +636,6 @@
 				count += 3;
 			}
 
-			// build path geometry
-			var totalDistance = pathPointList.distance();
-
-			if (totalDistance == 0) {
-				return 0;
-			}
-
-			var progressDistance = progress * totalDistance;
 			var lastPoint;
 
 			if (progressDistance > 0) {
@@ -609,10 +650,10 @@
 						var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
 						lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-						addVertices(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
+						addVertices(lastPoint);
 						break;
 					} else {
-						addVertices(pathPoint, width / 2, pathPoint.dist / (side !== "both" ? width / 2 : width));
+						addVertices(pathPoint);
 					}
 				}
 			} else {
@@ -622,37 +663,44 @@
 			// build arrow geometry
 			if (arrow) {
 				lastPoint = lastPoint || pathPointList.array[pathPointList.count - 1];
-				addStart(lastPoint, width / 2, lastPoint.dist / (side !== "both" ? width / 2 : width));
+				addStart(lastPoint);
 			}
 
 			var positionAttribute = this.getAttribute('position');
-			var normalAttribute = this.getAttribute('normal');
-			var uvAttribute = this.getAttribute('uv');
-			var indexAttribute = this.getIndex();
-
 			this._resizeAttribute('position', positionAttribute, position.length);
-			this._resizeAttribute('normal', normalAttribute, normal.length);
-			this._resizeAttribute('uv', uvAttribute, uv.length);
-			this._resizeIndex(indexAttribute, indices.length);
-
 			positionAttribute = this.getAttribute('position');
-			normalAttribute = this.getAttribute('normal');
-			uvAttribute = this.getAttribute('uv');
-			indexAttribute = this.getIndex();
-
 			positionAttribute.array.set(position, 0);
-			normalAttribute.array.set(normal, 0);
-			uvAttribute.array.set(uv, 0);
-			indexAttribute.set(indices, 0);
-
 			positionAttribute.updateRange.count = position.length;
-			normalAttribute.updateRange.count = normal.length;
-			uvAttribute.updateRange.count = uv.length;
-			indexAttribute.updateRange.count = indices.length;
-
 			positionAttribute.needsUpdate = true;
+
+			var normalAttribute = this.getAttribute('normal');
+			this._resizeAttribute('normal', normalAttribute, normal.length);
+			normalAttribute = this.getAttribute('normal');
+			normalAttribute.array.set(normal, 0);
+			normalAttribute.updateRange.count = normal.length;
 			normalAttribute.needsUpdate = true;
+
+			var uvAttribute = this.getAttribute('uv');
+			this._resizeAttribute('uv', uvAttribute, uv.length);
+			uvAttribute = this.getAttribute('uv');
+			uvAttribute.array.set(uv, 0);
+			uvAttribute.updateRange.count = uv.length;
 			uvAttribute.needsUpdate = true;
+
+			if (generateUv2) {
+				var uv2Attribute = this.getAttribute('uv2');
+				this._resizeAttribute('uv2', uv2Attribute, uv2.length);
+				uv2Attribute = this.getAttribute('uv2');
+				uv2Attribute.array.set(uv2, 0);
+				uv2Attribute.updateRange.count = uv2.length;
+				uv2Attribute.needsUpdate = true;
+			}
+
+			var indexAttribute = this.getIndex();
+			this._resizeIndex(indexAttribute, indices.length);
+			indexAttribute = this.getIndex();
+			indexAttribute.set(indices, 0);
+			indexAttribute.updateRange.count = indices.length;
 			indexAttribute.needsUpdate = true;
 
 			return count;
@@ -663,8 +711,8 @@
 	/**
 	 * PathTubeGeometry
 	 */
-	var PathTubeGeometry = function(maxVertex) {
-		PathGeometry.call(this, maxVertex || 1000);
+	var PathTubeGeometry = function(maxVertex, generateUv2) {
+		PathGeometry.call(this, maxVertex || 1000, generateUv2);
 	};
 
 	PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype), {
@@ -677,18 +725,30 @@
 			var startRad = options.startRad || 0;
 			var progress = options.progress !== undefined ? options.progress : 1;
 
+			var circum = radius * 2 * Math.PI;
+			var totalDistance = pathPointList.distance();
+			var progressDistance = progress * totalDistance;
+			if (progressDistance == 0) {
+				return 0;
+			}
+
+			var generateUv2 = !!this.getAttribute('uv2');
+
 			var count = 0;
 
 			// modify data
 			var position = [];
 			var normal = [];
 			var uv = [];
+			var uv2 = [];
 			var indices = [];
 			var verticesCount = 0;
 
 			var normalDir = new THREE.Vector3();
-			function addVertices(pathPoint, radius, radialSegments, uvDist) {
+			function addVertices(pathPoint, radius, radialSegments) {
 				var first = position.length === 0;
+				var uvDist = pathPoint.dist / circum;
+				var uvDist2 = pathPoint.dist / totalDistance;
 
 				for (var r = 0; r <= radialSegments; r++) {
 					var _r = r;
@@ -700,6 +760,10 @@
 					position.push(pathPoint.pos.x + normalDir.x * radius * pathPoint.widthScale, pathPoint.pos.y + normalDir.y * radius * pathPoint.widthScale, pathPoint.pos.z + normalDir.z * radius * pathPoint.widthScale);
 					normal.push(normalDir.x, normalDir.y, normalDir.z);
 					uv.push(uvDist, r / radialSegments);
+
+					if (generateUv2) {
+						uv2.push(uvDist2, r / radialSegments);
+					}
 
 					verticesCount++;
 				}
@@ -719,14 +783,6 @@
 				}
 			}
 
-			// build path geometry
-			var totalDistance = pathPointList.distance();
-			var progressDistance = progress * totalDistance;
-
-			if (progressDistance == 0) {
-				return 0;
-			}
-
 			if (progressDistance > 0) {
 				for (var i = 0; i < pathPointList.count; i++) {
 					var pathPoint = pathPointList.array[i];
@@ -739,42 +795,49 @@
 						var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
 						lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
-						addVertices(lastPoint, radius, radialSegments, lastPoint.dist / (radius * 2 * Math.PI));
+						addVertices(lastPoint, radius, radialSegments);
 						break;
 					} else {
-						addVertices(pathPoint, radius, radialSegments, pathPoint.dist / (radius * 2 * Math.PI));
+						addVertices(pathPoint, radius, radialSegments);
 					}
 				}
 			}
 
 			var positionAttribute = this.getAttribute('position');
-			var normalAttribute = this.getAttribute('normal');
-			var uvAttribute = this.getAttribute('uv');
-			var indexAttribute = this.getIndex();
-
 			this._resizeAttribute('position', positionAttribute, position.length);
-			this._resizeAttribute('normal', normalAttribute, normal.length);
-			this._resizeAttribute('uv', uvAttribute, uv.length);
-			this._resizeIndex(indexAttribute, indices.length);
-
 			positionAttribute = this.getAttribute('position');
-			normalAttribute = this.getAttribute('normal');
-			uvAttribute = this.getAttribute('uv');
-			indexAttribute = this.getIndex();
-
 			positionAttribute.array.set(position, 0);
-			normalAttribute.array.set(normal, 0);
-			uvAttribute.array.set(uv, 0);
-			indexAttribute.set(indices, 0);
-
 			positionAttribute.updateRange.count = position.length;
-			normalAttribute.updateRange.count = normal.length;
-			uvAttribute.updateRange.count = uv.length;
-			indexAttribute.updateRange.count = indices.length;
-
 			positionAttribute.needsUpdate = true;
+
+			var normalAttribute = this.getAttribute('normal');
+			this._resizeAttribute('normal', normalAttribute, normal.length);
+			normalAttribute = this.getAttribute('normal');
+			normalAttribute.array.set(normal, 0);
+			normalAttribute.updateRange.count = normal.length;
 			normalAttribute.needsUpdate = true;
+
+			var uvAttribute = this.getAttribute('uv');
+			this._resizeAttribute('uv', uvAttribute, uv.length);
+			uvAttribute = this.getAttribute('uv');
+			uvAttribute.array.set(uv, 0);
+			uvAttribute.updateRange.count = uv.length;
 			uvAttribute.needsUpdate = true;
+
+			if (generateUv2) {
+				var uv2Attribute = this.getAttribute('uv2');
+				this._resizeAttribute('uv2', uv2Attribute, uv2.length);
+				uv2Attribute = this.getAttribute('uv2');
+				uv2Attribute.array.set(uv2, 0);
+				uv2Attribute.updateRange.count = uv2.length;
+				uv2Attribute.needsUpdate = true;
+			}
+
+			var indexAttribute = this.getIndex();
+			this._resizeIndex(indexAttribute, indices.length);
+			indexAttribute = this.getIndex();
+			indexAttribute.set(indices, 0);
+			indexAttribute.updateRange.count = indices.length;
 			indexAttribute.needsUpdate = true;
 
 			return count;
