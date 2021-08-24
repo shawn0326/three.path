@@ -96,39 +96,34 @@ PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype)
 			}
 		}
 
+		this._resizeAttribute('position', position.length);
 		var positionAttribute = this.getAttribute('position');
-		this._resizeAttribute('position', positionAttribute, position.length);
-		positionAttribute = this.getAttribute('position');
 		positionAttribute.array.set(position, 0);
 		positionAttribute.updateRange.count = position.length;
 		positionAttribute.needsUpdate = true;
 
+		this._resizeAttribute('normal', normal.length);
 		var normalAttribute = this.getAttribute('normal');
-		this._resizeAttribute('normal', normalAttribute, normal.length);
-		normalAttribute = this.getAttribute('normal');
 		normalAttribute.array.set(normal, 0);
 		normalAttribute.updateRange.count = normal.length;
 		normalAttribute.needsUpdate = true;
 
+		this._resizeAttribute('uv', uv.length);
 		var uvAttribute = this.getAttribute('uv');
-		this._resizeAttribute('uv', uvAttribute, uv.length);
-		uvAttribute = this.getAttribute('uv');
 		uvAttribute.array.set(uv, 0);
 		uvAttribute.updateRange.count = uv.length;
 		uvAttribute.needsUpdate = true;
 
 		if (generateUv2) {
+			this._resizeAttribute('uv2', uv2.length);
 			var uv2Attribute = this.getAttribute('uv2');
-			this._resizeAttribute('uv2', uv2Attribute, uv2.length);
-			uv2Attribute = this.getAttribute('uv2');
 			uv2Attribute.array.set(uv2, 0);
 			uv2Attribute.updateRange.count = uv2.length;
 			uv2Attribute.needsUpdate = true;
 		}
 
+		this._resizeIndex(indices.length);
 		var indexAttribute = this.getIndex();
-		this._resizeIndex(indexAttribute, indices.length);
-		indexAttribute = this.getIndex();
 		indexAttribute.set(indices, 0);
 		indexAttribute.updateRange.count = indices.length;
 		indexAttribute.needsUpdate = true;

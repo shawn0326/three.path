@@ -3,73 +3,59 @@ import { PathPoint } from './PathPoint.js';
 /**
  * PathGeometry
  */
-var PathGeometry = function(maxVertex, generateUv2) {
-	THREE.BufferGeometry.call(this);
+class PathGeometry extends THREE.BufferGeometry {
 
-	maxVertex = maxVertex || 3000;
+	constructor(maxVertex = 3000, generateUv2 = false) {
+		super();
 
-	if (this.setAttribute) {
 		this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
 		this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
 		this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
 		if (generateUv2) {
 			this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
 		}
-	} else { // for old three.js
-		this.addAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
-		this.addAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
-		this.addAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
-		if (generateUv2) {
-			this.addAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
-		}
+
+		this.drawRange.start = 0;
+		this.drawRange.count = 0;
+
+		this.setIndex(new Array(maxVertex * 3));
 	}
 
-	this.drawRange.start = 0;
-	this.drawRange.count = 0;
-
-	this.setIndex(new Array(maxVertex * 3));
-}
-
-PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.prototype), {
-
-	constructor: PathGeometry,
-
 	/**
-	 * update geometry by PathPointList instance
+	 * Update geometry by PathPointList instance
 	 * @param {PathPointList} pathPointList
 	 * @param {Object} options
+	 * @param {Number} [options.width=0.1]
+	 * @param {Boolean} [options.arrow=true]
+	 * @param {Number} [options.progress=1]
+	 * @param {String} [options.side='both'] - "left"/"right"/"both"
 	 */
-	update: function(pathPointList, options) {
-		// update attributes
-		options = options || {};
-		var count = this._updateAttributes(pathPointList, options);
-
+	update(pathPointList, options = {}) {
+		const count = this._updateAttributes(pathPointList, options);
 		this.drawRange.count = count;
-	},
+	}
 
-	_resizeAttribute: function(name, attribute, len) {
+	_resizeAttribute(name, len) {
+		let attribute = this.getAttribute(name);
 		while (attribute.array.length < len) {
-			var oldLength = attribute.array.length;
-			var newAttribute = new THREE.BufferAttribute(
+			const oldLength = attribute.array.length;
+			const newAttribute = new THREE.BufferAttribute(
 				new Float32Array(oldLength * 2),
 				attribute.itemSize,
 				attribute.normalized
 			);
 			newAttribute.name = attribute.name;
 			newAttribute.usage = attribute.usage;
-			if (this.setAttribute) {
-				this.setAttribute(name, newAttribute);
-			} else {
-				this.addAttribute(name, newAttribute);
-			}
+			this.setAttribute(name, newAttribute);
 			attribute = newAttribute;
 		}
-	},
+	}
 
-	_resizeIndex: function(index, len) {
+	_resizeIndex(len) {
+		let index = this.getIndex();
 		while (index.array.length < len) {
-			var oldLength = index.array.length;
-			var newIndex = new THREE.BufferAttribute(
+			const oldLength = index.array.length;
+			const newIndex = new THREE.BufferAttribute(
 				oldLength * 2 > 65535 ? new Uint32Array(oldLength * 2) : new Uint16Array(oldLength * 2),
 				1
 			);
@@ -78,55 +64,56 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			this.setIndex(newIndex);
 			index = newIndex;
 		}
-	},
+	}
 
-	_updateAttributes: function(pathPointList, options) {
-		var width = options.width || 0.1;
-		var progress = options.progress !== undefined ? options.progress : 1;
-		var arrow = options.arrow !== undefined ? options.arrow : true;
-		var side = options.side !== undefined ? options.side : "both";
+	_updateAttributes(pathPointList, options) {
+		const width = options.width || 0.1;
+		const progress = options.progress !== undefined ? options.progress : 1;
+		const arrow = options.arrow !== undefined ? options.arrow : true;
+		const side = options.side !== undefined ? options.side : "both";
 
-		var halfWidth = width / 2;
-		var sideWidth = (side !== "both" ? width / 2 : width);
-		var totalDistance = pathPointList.distance();
-		var progressDistance = progress * totalDistance;
+		const halfWidth = width / 2;
+		const sideWidth = (side !== "both" ? width / 2 : width);
+		const totalDistance = pathPointList.distance();
+		const progressDistance = progress * totalDistance;
 		if (totalDistance == 0) {
 			return 0;
 		}
-		var sharpUvOffset = halfWidth / sideWidth;
-		var sharpUvOffset2 = halfWidth / totalDistance;
 
-		var generateUv2 = !!this.getAttribute('uv2');
+		const sharpUvOffset = halfWidth / sideWidth;
+		const sharpUvOffset2 = halfWidth / totalDistance;
 
-		var count = 0;
+		const generateUv2 = !!this.getAttribute('uv2');
+
+		let count = 0;
 
 		// modify data
-		var position = [];
-		var normal = [];
-		var uv = [];
-		var uv2 = [];
-		var indices = [];
-		var verticesCount = 0;
+		const position = [];
+		const normal = [];
+		const uv = [];
+		const uv2 = [];
+		const indices = [];
+		let verticesCount = 0;
 
-		var right = new THREE.Vector3();
-		var left = new THREE.Vector3();
+		const right = new THREE.Vector3();
+		const left = new THREE.Vector3();
 
 		// for sharp corners
-		var leftOffset = new THREE.Vector3();
-		var rightOffset = new THREE.Vector3();
-		var tempPoint1 = new THREE.Vector3();
-		var tempPoint2 = new THREE.Vector3();
+		const leftOffset = new THREE.Vector3();
+		const rightOffset = new THREE.Vector3();
+		const tempPoint1 = new THREE.Vector3();
+		const tempPoint2 = new THREE.Vector3();
 
 		function addVertices(pathPoint) {
-			var first = position.length === 0;
-			var sharpCorner = pathPoint.sharp && !first;
+			const first = position.length === 0;
+			const sharpCorner = pathPoint.sharp && !first;
 
-			var uvDist = pathPoint.dist / sideWidth;
-			var uvDist2 = pathPoint.dist / totalDistance;
+			const uvDist = pathPoint.dist / sideWidth;
+			const uvDist2 = pathPoint.dist / totalDistance;
 
-			var dir = pathPoint.dir;
-			var up = pathPoint.up;
-			var _right = pathPoint.right;
+			const dir = pathPoint.dir;
+			const up = pathPoint.up;
+			const _right = pathPoint.right;
 
 			if (side !== "left") {
 				right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
@@ -147,11 +134,11 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 				leftOffset.fromArray(position, position.length - 6).sub(left);
 				rightOffset.fromArray(position, position.length - 3).sub(right);
 
-				var leftDist = leftOffset.length();
-				var rightDist = rightOffset.length();
+				const leftDist = leftOffset.length();
+				const rightDist = rightOffset.length();
 
-				var sideOffset = leftDist - rightDist;
-				var longerOffset, longEdge;
+				const sideOffset = leftDist - rightDist;
+				let longerOffset, longEdge;
 
 				if (sideOffset > 0) {
 					longerOffset = leftOffset;
@@ -277,14 +264,14 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			}
 		}
 
-		var sharp = new THREE.Vector3();
+		const sharp = new THREE.Vector3();
 		function addStart(pathPoint) {
-			var dir = pathPoint.dir;
-			var up = pathPoint.up;
-			var _right = pathPoint.right;
+			const dir = pathPoint.dir;
+			const up = pathPoint.up;
+			const _right = pathPoint.right;
 
-			var uvDist = pathPoint.dist / sideWidth;
-			var uvDist2 = pathPoint.dist / totalDistance;
+			const uvDist = pathPoint.dist / sideWidth;
+			const uvDist2 = pathPoint.dist / totalDistance;
 
 			if (side !== "left") {
 				right.copy(_right).multiplyScalar(halfWidth * 2);
@@ -339,18 +326,18 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			count += 3;
 		}
 
-		var lastPoint;
+		let lastPoint;
 
 		if (progressDistance > 0) {
-			for (var i = 0; i < pathPointList.count; i++) {
-				var pathPoint = pathPointList.array[i];
+			for (let i = 0; i < pathPointList.count; i++) {
+				const pathPoint = pathPointList.array[i];
 
 				if (pathPoint.dist > progressDistance) {
-					var prevPoint =  pathPointList.array[i - 1];
+					const prevPoint =  pathPointList.array[i - 1];
 					lastPoint = new PathPoint();
 
 					// linear lerp for progress
-					var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
+					const alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
 					lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
 					addVertices(lastPoint);
@@ -369,39 +356,34 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			addStart(lastPoint);
 		}
 
-		var positionAttribute = this.getAttribute('position');
-		this._resizeAttribute('position', positionAttribute, position.length);
-		positionAttribute = this.getAttribute('position');
+		this._resizeAttribute('position', position.length);
+		const positionAttribute = this.getAttribute('position');
 		positionAttribute.array.set(position, 0);
 		positionAttribute.updateRange.count = position.length;
 		positionAttribute.needsUpdate = true;
 
-		var normalAttribute = this.getAttribute('normal');
-		this._resizeAttribute('normal', normalAttribute, normal.length);
-		normalAttribute = this.getAttribute('normal');
+		this._resizeAttribute('normal', normal.length);
+		const normalAttribute = this.getAttribute('normal');
 		normalAttribute.array.set(normal, 0);
 		normalAttribute.updateRange.count = normal.length;
 		normalAttribute.needsUpdate = true;
 
-		var uvAttribute = this.getAttribute('uv');
-		this._resizeAttribute('uv', uvAttribute, uv.length);
-		uvAttribute = this.getAttribute('uv');
+		this._resizeAttribute('uv', uv.length);
+		const uvAttribute = this.getAttribute('uv');
 		uvAttribute.array.set(uv, 0);
 		uvAttribute.updateRange.count = uv.length;
 		uvAttribute.needsUpdate = true;
 
 		if (generateUv2) {
-			var uv2Attribute = this.getAttribute('uv2');
-			this._resizeAttribute('uv2', uv2Attribute, uv2.length);
-			uv2Attribute = this.getAttribute('uv2');
+			this._resizeAttribute('uv2', uv2.length);
+			const uv2Attribute = this.getAttribute('uv2');
 			uv2Attribute.array.set(uv2, 0);
 			uv2Attribute.updateRange.count = uv2.length;
 			uv2Attribute.needsUpdate = true;
 		}
 
-		var indexAttribute = this.getIndex();
-		this._resizeIndex(indexAttribute, indices.length);
-		indexAttribute = this.getIndex();
+		this._resizeIndex(indices.length);
+		const indexAttribute = this.getIndex();
 		indexAttribute.set(indices, 0);
 		indexAttribute.updateRange.count = indices.length;
 		indexAttribute.needsUpdate = true;
@@ -409,6 +391,6 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 		return count;
 	}
 
-});
+}
 
 export { PathGeometry };

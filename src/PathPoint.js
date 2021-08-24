@@ -1,38 +1,36 @@
 /**
  * PathPoint
  */
-var PathPoint = function() {
-	this.pos = new THREE.Vector3();
+class PathPoint {
 
-	this.dir = new THREE.Vector3();
+	constructor() {
+		this.pos = new THREE.Vector3();
+		this.dir = new THREE.Vector3();
+		this.right = new THREE.Vector3();
+		this.up = new THREE.Vector3(); // normal
+		this.dist = 0; // distance from start
+		this.widthScale = 1; // for corner
+		this.sharp = false; // marks as sharp corner
+	}
 
-	this.right = new THREE.Vector3();
+	lerpPathPoints(p1, p2, alpha) {
+		this.pos.lerpVectors(p1.pos, p2.pos, alpha);
+		this.dir.lerpVectors(p1.dir, p2.dir, alpha);
+		this.up.lerpVectors(p1.up, p2.up, alpha);
+		this.right.lerpVectors(p1.right, p2.right, alpha);
+		this.dist = (p2.dist - p1.dist) * alpha + p1.dist;
+		this.widthScale = (p2.widthScale - p1.widthScale) * alpha + p1.widthScale;
+	}
 
-	this.up = new THREE.Vector3(); // normal
+	copy(source) {
+		this.pos.copy(source.pos);
+		this.dir.copy(source.dir);
+		this.up.copy(source.up);
+		this.right.copy(source.right);
+		this.dist = source.dist;
+		this.widthScale = source.widthScale;
+	}
 
-	this.dist = 0; // distance from start
-
-	this.widthScale = 1;
-
-	this.sharp = false; // marks as sharp corner
-}
-
-PathPoint.prototype.lerpPathPoints = function(p1, p2, alpha) {
-	this.pos.lerpVectors(p1.pos, p2.pos, alpha);
-	this.dir.lerpVectors(p1.dir, p2.dir, alpha);
-	this.up.lerpVectors(p1.up, p2.up, alpha);
-	this.right.lerpVectors(p1.right, p2.right, alpha);
-	this.dist = (p2.dist - p1.dist) * alpha + p1.dist;
-	this.widthScale = (p2.widthScale - p1.widthScale) * alpha + p1.widthScale;
-}
-
-PathPoint.prototype.copy = function(source) {
-	this.pos.copy(source.pos);
-	this.dir.copy(source.dir);
-	this.up.copy(source.up);
-	this.right.copy(source.right);
-	this.dist = source.dist;
-	this.widthScale = source.widthScale;
 }
 
 export { PathPoint };

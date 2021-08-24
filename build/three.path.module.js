@@ -1,274 +1,51 @@
-// https://github.com/shawn0326/three.path
+// github.com/shawn0326/three.path
 /**
  * PathPoint
  */
-var PathPoint = function() {
-	this.pos = new THREE.Vector3();
+class PathPoint {
 
-	this.dir = new THREE.Vector3();
-
-	this.right = new THREE.Vector3();
-
-	this.up = new THREE.Vector3(); // normal
-
-	this.dist = 0; // distance from start
-
-	this.widthScale = 1;
-
-	this.sharp = false; // marks as sharp corner
-};
-
-PathPoint.prototype.lerpPathPoints = function(p1, p2, alpha) {
-	this.pos.lerpVectors(p1.pos, p2.pos, alpha);
-	this.dir.lerpVectors(p1.dir, p2.dir, alpha);
-	this.up.lerpVectors(p1.up, p2.up, alpha);
-	this.right.lerpVectors(p1.right, p2.right, alpha);
-	this.dist = (p2.dist - p1.dist) * alpha + p1.dist;
-	this.widthScale = (p2.widthScale - p1.widthScale) * alpha + p1.widthScale;
-};
-
-PathPoint.prototype.copy = function(source) {
-	this.pos.copy(source.pos);
-	this.dir.copy(source.dir);
-	this.up.copy(source.up);
-	this.right.copy(source.right);
-	this.dist = source.dist;
-	this.widthScale = source.widthScale;
-};
-
-/**
- * PathPointList
- * input points to generate a PathPoint list
- */
-var PathPointList = function() {
-	this.array = []; // path point array
-	this.count = 0;
-};
-
-/**
- * set points
- * @param {THREE.Vector3[]} points key points array
- * @param {number} cornerRadius? the corner radius. set 0 to disable round corner. default is 0.1
- * @param {number} cornerSplit? the corner split. default is 10.
- * @param {number} up? force up. default is auto up (calculate by tangent).
- * @param {boolean} close? close path. default is false.
- */
-PathPointList.prototype.set = function(points, cornerRadius, cornerSplit, up, close) {
-	points = points.slice(0);
-
-	if (points.length < 2) {
-		this.count = 0;
-		console.warn("PathPointList: points length less than 2.");
-		return;
+	constructor() {
+		this.pos = new THREE.Vector3();
+		this.dir = new THREE.Vector3();
+		this.right = new THREE.Vector3();
+		this.up = new THREE.Vector3(); // normal
+		this.dist = 0; // distance from start
+		this.widthScale = 1; // for corner
+		this.sharp = false; // marks as sharp corner
 	}
 
-	cornerRadius = cornerRadius !== undefined ? cornerRadius : 0.1;
-	cornerSplit = cornerSplit !== undefined ? cornerSplit : 10;
-	close = close !== undefined ? close : false;
-
-	if (close && !points[0].equals(points[points.length - 1])) {
-		points.push(new THREE.Vector3().copy(points[0]));
+	lerpPathPoints(p1, p2, alpha) {
+		this.pos.lerpVectors(p1.pos, p2.pos, alpha);
+		this.dir.lerpVectors(p1.dir, p2.dir, alpha);
+		this.up.lerpVectors(p1.up, p2.up, alpha);
+		this.right.lerpVectors(p1.right, p2.right, alpha);
+		this.dist = (p2.dist - p1.dist) * alpha + p1.dist;
+		this.widthScale = (p2.widthScale - p1.widthScale) * alpha + p1.widthScale;
 	}
 
-	for (var i = 0, l = points.length; i < l; i++) {
-		if (i === 0) {
-			this._start(points[i], points[i + 1], up);
-		} else if (i === l - 1) {
-			if (close) {
-				this._corner(points[i], points[1], cornerRadius, cornerSplit, up);
-				// fix start
-				var dist = this.array[0].dist; // should not copy dist
-				this.array[0].copy(this.array[this.count - 1]);
-				this.array[0].dist = dist;
-			} else {
-				this._end(points[i]);
-			}
-		} else {
-			this._corner(points[i], points[i + 1], cornerRadius, cornerSplit, up);
-		}
-	}
-};
-
-/**
- * get distance of this path
- * @return {number} distance
- */
-PathPointList.prototype.distance = function() {
-	if (this.count == 0) {
-		return 0;
-	} else {
-		return this.array[this.count - 1].dist;
-	}
-};
-
-PathPointList.prototype._start = function(current, next, up) {
-	this.count = 0;
-
-	var point = this._getByIndex(this.count);
-
-	point.pos.copy(current);
-	point.dir.subVectors(next, current);
-
-	// init start up dir
-	if (up) {
-		point.up.copy(up);
-	} else {
-		var min = Number.MAX_VALUE;
-		var tx = Math.abs(point.dir.x);
-		var ty = Math.abs(point.dir.y);
-		var tz = Math.abs(point.dir.z);
-		if (tx < min) {
-			min = tx;
-			point.up.set(1, 0, 0);
-		}
-		if (ty < min) {
-			min = ty;
-			point.up.set(0, 1, 0);
-		}
-		if (tz < min) {
-			point.up.set(0, 0, 1);
-		}
+	copy(source) {
+		this.pos.copy(source.pos);
+		this.dir.copy(source.dir);
+		this.up.copy(source.up);
+		this.right.copy(source.right);
+		this.dist = source.dist;
+		this.widthScale = source.widthScale;
 	}
 
-	point.right.crossVectors(point.dir, point.up).normalize();
-	point.up.crossVectors(point.right, point.dir).normalize();
-	point.dist = 0;
-	point.widthScale = 1;
-	point.sharp = false;
+}
 
-	point.dir.normalize();
+const helpVec3_1 = new THREE.Vector3();
+const helpVec3_2 = new THREE.Vector3();
+const helpVec3_3 = new THREE.Vector3();
+const helpMat4 = new THREE.Matrix4();
+const helpCurve = new THREE.QuadraticBezierCurve3();
 
-	this.count++;
-};
+function _getCornerBezierCurve(last, current, next, cornerRadius, out) {
+	const lastDir = helpVec3_1.subVectors(current, last);
+	const nextDir = helpVec3_2.subVectors(next, current);
 
-var helpVec3_1 = new THREE.Vector3();
-var helpVec3_2 = new THREE.Vector3();
-var helpVec3_3 = new THREE.Vector3();
-var helpMat4 = new THREE.Matrix4();
-var helpCurve = new THREE.QuadraticBezierCurve3();
-
-PathPointList.prototype._corner = function(current, next, cornerRadius, cornerSplit, up) {
-	if (cornerRadius > 0 && cornerSplit > 0) {
-		var lastPoint = this.array[this.count - 1];
-		var curve = this._getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, helpCurve);
-		var samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
-
-		for (var f = 0; f < cornerSplit; f += 1) {
-			this._sharpCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
-		}
-
-		if (!samplerPoints[cornerSplit].equals(next)) {
-			this._sharpCorner(samplerPoints[cornerSplit], next, up, 2);
-		}
-	} else {
-		this._sharpCorner(current, next, up, 0, true);
-	}
-};
-
-// dirType: 0 - use middle dir / 1 - use last dir / 2- use next dir
-PathPointList.prototype._sharpCorner = function(current, next, up, dirType, sharp) {
-	var lastPoint = this.array[this.count - 1];
-	var point = this._getByIndex(this.count);
-
-	var lastDir = helpVec3_1.subVectors(current, lastPoint.pos);
-	var nextDir = helpVec3_2.subVectors(next, current);
-
-	var lastDirLength = lastDir.length();
-
-	lastDir.normalize();
-	nextDir.normalize();
-
-	point.pos.copy(current);
-
-	if (dirType) {
-		if (dirType === 1) {
-			point.dir.copy(lastDir);
-		} else if (dirType === 2) {
-			point.dir.copy(nextDir);
-		}
-	} else {
-		point.dir.addVectors(lastDir, nextDir);
-		point.dir.normalize();
-	}
-
-	if (up) {
-		if (point.dir.dot(up) === 1) {
-			point.right.crossVectors(nextDir, up).normalize();
-		} else {
-			point.right.crossVectors(point.dir, up).normalize();
-		}
-
-		point.up.crossVectors(point.right, point.dir).normalize();
-	} else {
-		point.up.copy(lastPoint.up);
-		var vec = helpVec3_3.crossVectors(lastPoint.dir, point.dir);
-		if (vec.length() > Number.EPSILON) {
-			vec.normalize();
-			var theta = Math.acos(Math.min(Math.max(lastPoint.dir.dot(point.dir), -1), 1)); // clamp for floating pt errors
-			point.up.applyMatrix4(helpMat4.makeRotationAxis(vec, theta));
-		}
-
-		point.right.crossVectors(point.dir, point.up).normalize();
-	}
-
-	point.dist = lastPoint.dist + lastDirLength;
-
-	var _cos = lastDir.dot(nextDir);
-	point.widthScale = Math.min(1 / Math.sqrt((1 + _cos) / 2), 1.415) || 1;
-	point.sharp = (Math.abs(_cos - 1) > 0.05) && sharp;
-	// point.sharp = sharp || false;
-
-	// for sharp corner
-	// if(point.widthScale > 1.414213562373) {
-	//     var offsetDist = (point.widthScale - 1.414213562373) / 2;
-	//     var offset = helpVec3_3.copy(lastDir).multiplyScalar( -1 ).add( nextDir ).normalize().multiplyScalar( offsetDist );
-	//     point.pos.add(offset);
-	// }
-
-	this.count++;
-};
-
-PathPointList.prototype._end = function(current) {
-	var lastPoint = this.array[this.count - 1];
-	var point = this._getByIndex(this.count);
-
-	point.pos.copy(current);
-	point.dir.subVectors(current, lastPoint.pos);
-	var dist = point.dir.length();
-	point.dir.normalize();
-
-	point.up.copy(lastPoint.up);
-	var vec = helpVec3_1.crossVectors(lastPoint.dir, point.dir);
-	if (vec.length() > Number.EPSILON) {
-		vec.normalize();
-		var theta = Math.acos(Math.min(Math.max(lastPoint.dir.dot(point.dir), -1), 1)); // clamp for floating pt errors
-		point.up.applyMatrix4(helpMat4.makeRotationAxis(vec, theta));
-	}
-
-	point.right.crossVectors(point.dir, point.up).normalize();
-
-	point.dist = lastPoint.dist + dist;
-	point.widthScale = 1;
-	point.sharp = false;
-
-	this.count++;
-};
-
-PathPointList.prototype._getByIndex = function(index) {
-	if (!this.array[index]) {
-		this.array[index] = new PathPoint();
-	}
-	return this.array[index];
-};
-
-PathPointList.prototype._getCornerBezierCurve = function(last, current, next, cornerRadius, out) {
-	var lastDir = helpVec3_1.subVectors(current, last);
-	var nextDir = helpVec3_2.subVectors(next, current);
-
-	var lastDirLength = lastDir.length();
-	var nextDirLength = nextDir.length();
-	// var lastCornerRadius = Math.min(lastDir.length(), cornerRadius);
-	// var nextCornerRadius = Math.min(nextDir.length(), cornerRadius);
+	const lastDirLength = lastDir.length();
+	const nextDirLength = nextDir.length();
 
 	lastDir.normalize();
 	nextDir.normalize();
@@ -286,81 +63,281 @@ PathPointList.prototype._getCornerBezierCurve = function(last, current, next, co
 	} else {
 		out.v2.copy(next);
 	}
-	// out.v2.copy(current).add(nextDir.multiplyScalar(nextCornerRadius));
 
 	return out;
-};
+}
+
+/**
+ * PathPointList
+ * input points to generate a PathPoint list
+ */
+class PathPointList {
+
+	constructor() {
+		this.array = []; // path point array
+		this.count = 0;
+	}
+
+	/**
+	 * Set points
+	 * @param {THREE.Vector3[]} points key points array
+	 * @param {number} cornerRadius? the corner radius. set 0 to disable round corner. default is 0.1
+	 * @param {number} cornerSplit? the corner split. default is 10.
+	 * @param {number} up? force up. default is auto up (calculate by tangent).
+	 * @param {boolean} close? close path. default is false.
+	 */
+	set(points, cornerRadius = 0.1, cornerSplit = 10, up = null, close = false) {
+		points = points.slice(0);
+
+		if (points.length < 2) {
+			console.warn("PathPointList: points length less than 2.");
+			this.count = 0;
+			return;
+		}
+
+		// Auto close
+		if (close && !points[0].equals(points[points.length - 1])) {
+			points.push(new THREE.Vector3().copy(points[0]));
+		}
+
+		// Generate path point list
+		for (let i = 0, l = points.length; i < l; i++) {
+			if (i === 0) {
+				this._start(points[i], points[i + 1], up);
+			} else if (i === l - 1) {
+				if (close) {
+					// Connect end point and start point
+					this._corner(points[i], points[1], cornerRadius, cornerSplit, up);
+
+					// Fix start point
+					const dist = this.array[0].dist; // should not copy dist
+					this.array[0].copy(this.array[this.count - 1]);
+					this.array[0].dist = dist;
+				} else {
+					this._end(points[i]);
+				}
+			} else {
+				this._corner(points[i], points[i + 1], cornerRadius, cornerSplit, up);
+			}
+		}
+	}
+
+	/**
+	 * Get distance of this path
+	 * @return {number}
+	 */
+	distance() {
+		if (this.count > 0) {
+			return this.array[this.count - 1].dist;
+		}
+		return 0;
+	}
+
+	_getByIndex(index) {
+		if (!this.array[index]) {
+			this.array[index] = new PathPoint();
+		}
+		return this.array[index];
+	}
+
+	_start(current, next, up) {
+		this.count = 0;
+
+		const point = this._getByIndex(this.count);
+
+		point.pos.copy(current);
+		point.dir.subVectors(next, current);
+
+		// init start up dir
+		if (up) {
+			point.up.copy(up);
+		} else {
+			// select an initial normal vector perpendicular to the first tangent vector
+			let min = Number.MAX_VALUE;
+			const tx = Math.abs(point.dir.x);
+			const ty = Math.abs(point.dir.y);
+			const tz = Math.abs(point.dir.z);
+			if (tx < min) {
+				min = tx;
+				point.up.set(1, 0, 0);
+			}
+			if (ty < min) {
+				min = ty;
+				point.up.set(0, 1, 0);
+			}
+			if (tz < min) {
+				point.up.set(0, 0, 1);
+			}
+		}
+
+		point.right.crossVectors(point.dir, point.up).normalize();
+		point.up.crossVectors(point.right, point.dir).normalize();
+		point.dist = 0;
+		point.widthScale = 1;
+		point.sharp = false;
+
+		point.dir.normalize();
+
+		this.count++;
+	}
+
+	_end(current) {
+		const lastPoint = this.array[this.count - 1];
+		const point = this._getByIndex(this.count);
+
+		point.pos.copy(current);
+		point.dir.subVectors(current, lastPoint.pos);
+		const dist = point.dir.length();
+		point.dir.normalize();
+
+		point.up.copy(lastPoint.up); // copy last up
+
+		const vec = helpVec3_1.crossVectors(lastPoint.dir, point.dir);
+		if (vec.length() > Number.EPSILON) {
+			vec.normalize();
+			const theta = Math.acos(Math.min(Math.max(lastPoint.dir.dot(point.dir), -1), 1)); // clamp for floating pt errors
+			point.up.applyMatrix4(helpMat4.makeRotationAxis(vec, theta));
+		}
+
+		point.right.crossVectors(point.dir, point.up).normalize();
+
+		point.dist = lastPoint.dist + dist;
+		point.widthScale = 1;
+		point.sharp = false;
+
+		this.count++;
+	}
+
+	_corner(current, next, cornerRadius, cornerSplit, up) {
+		if (cornerRadius > 0 && cornerSplit > 0) {
+			const lastPoint = this.array[this.count - 1];
+			const curve = _getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, helpCurve);
+			const samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
+
+			for (let f = 0; f < cornerSplit; f++) {
+				this._sharpCorner(samplerPoints[f], samplerPoints[f + 1], up, f === 0 ? 1 : 0);
+			}
+
+			if (!samplerPoints[cornerSplit].equals(next)) {
+				this._sharpCorner(samplerPoints[cornerSplit], next, up, 2);
+			}
+		} else {
+			this._sharpCorner(current, next, up, 0, true);
+		}
+	}
+
+	// dirType: 0 - use middle dir / 1 - use last dir / 2- use next dir
+	_sharpCorner(current, next, up, dirType = 0, sharp = false) {
+		const lastPoint = this.array[this.count - 1];
+		const point = this._getByIndex(this.count);
+
+		const lastDir = helpVec3_1.subVectors(current, lastPoint.pos);
+		const nextDir = helpVec3_2.subVectors(next, current);
+
+		const lastDirLength = lastDir.length();
+
+		lastDir.normalize();
+		nextDir.normalize();
+
+		point.pos.copy(current);
+
+		if (dirType === 1) {
+			point.dir.copy(lastDir);
+		} else if (dirType === 2) {
+			point.dir.copy(nextDir);
+		} else {
+			point.dir.addVectors(lastDir, nextDir);
+			point.dir.normalize();
+		}
+
+		if (up) {
+			if (point.dir.dot(up) === 1) {
+				point.right.crossVectors(nextDir, up).normalize();
+			} else {
+				point.right.crossVectors(point.dir, up).normalize();
+			}
+
+			point.up.crossVectors(point.right, point.dir).normalize();
+		} else {
+			point.up.copy(lastPoint.up);
+
+			const vec = helpVec3_3.crossVectors(lastPoint.dir, point.dir);
+			if (vec.length() > Number.EPSILON) {
+				vec.normalize();
+				const theta = Math.acos(Math.min(Math.max(lastPoint.dir.dot(point.dir), -1), 1)); // clamp for floating pt errors
+				point.up.applyMatrix4(helpMat4.makeRotationAxis(vec, theta));
+			}
+
+			point.right.crossVectors(point.dir, point.up).normalize();
+		}
+
+		point.dist = lastPoint.dist + lastDirLength;
+
+		const _cos = lastDir.dot(nextDir);
+		point.widthScale = Math.min(1 / Math.sqrt((1 + _cos) / 2), 1.415) || 1;
+		point.sharp = (Math.abs(_cos - 1) > 0.05) && sharp;
+
+		this.count++;
+	}
+
+}
 
 /**
  * PathGeometry
  */
-var PathGeometry = function(maxVertex, generateUv2) {
-	THREE.BufferGeometry.call(this);
+class PathGeometry extends THREE.BufferGeometry {
 
-	maxVertex = maxVertex || 3000;
+	constructor(maxVertex = 3000, generateUv2 = false) {
+		super();
 
-	if (this.setAttribute) {
 		this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
 		this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
 		this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
 		if (generateUv2) {
 			this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
 		}
-	} else { // for old three.js
-		this.addAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
-		this.addAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setDynamic(true));
-		this.addAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
-		if (generateUv2) {
-			this.addAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setDynamic(true));
-		}
+
+		this.drawRange.start = 0;
+		this.drawRange.count = 0;
+
+		this.setIndex(new Array(maxVertex * 3));
 	}
 
-	this.drawRange.start = 0;
-	this.drawRange.count = 0;
-
-	this.setIndex(new Array(maxVertex * 3));
-};
-
-PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.prototype), {
-
-	constructor: PathGeometry,
-
 	/**
-	 * update geometry by PathPointList instance
+	 * Update geometry by PathPointList instance
 	 * @param {PathPointList} pathPointList
 	 * @param {Object} options
+	 * @param {Number} [options.width=0.1]
+	 * @param {Boolean} [options.arrow=true]
+	 * @param {Number} [options.progress=1]
+	 * @param {String} [options.side='both'] - "left"/"right"/"both"
 	 */
-	update: function(pathPointList, options) {
-		// update attributes
-		options = options || {};
-		var count = this._updateAttributes(pathPointList, options);
-
+	update(pathPointList, options = {}) {
+		const count = this._updateAttributes(pathPointList, options);
 		this.drawRange.count = count;
-	},
+	}
 
-	_resizeAttribute: function(name, attribute, len) {
+	_resizeAttribute(name, len) {
+		let attribute = this.getAttribute(name);
 		while (attribute.array.length < len) {
-			var oldLength = attribute.array.length;
-			var newAttribute = new THREE.BufferAttribute(
+			const oldLength = attribute.array.length;
+			const newAttribute = new THREE.BufferAttribute(
 				new Float32Array(oldLength * 2),
 				attribute.itemSize,
 				attribute.normalized
 			);
 			newAttribute.name = attribute.name;
 			newAttribute.usage = attribute.usage;
-			if (this.setAttribute) {
-				this.setAttribute(name, newAttribute);
-			} else {
-				this.addAttribute(name, newAttribute);
-			}
+			this.setAttribute(name, newAttribute);
 			attribute = newAttribute;
 		}
-	},
+	}
 
-	_resizeIndex: function(index, len) {
+	_resizeIndex(len) {
+		let index = this.getIndex();
 		while (index.array.length < len) {
-			var oldLength = index.array.length;
-			var newIndex = new THREE.BufferAttribute(
+			const oldLength = index.array.length;
+			const newIndex = new THREE.BufferAttribute(
 				oldLength * 2 > 65535 ? new Uint32Array(oldLength * 2) : new Uint16Array(oldLength * 2),
 				1
 			);
@@ -369,55 +346,56 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			this.setIndex(newIndex);
 			index = newIndex;
 		}
-	},
+	}
 
-	_updateAttributes: function(pathPointList, options) {
-		var width = options.width || 0.1;
-		var progress = options.progress !== undefined ? options.progress : 1;
-		var arrow = options.arrow !== undefined ? options.arrow : true;
-		var side = options.side !== undefined ? options.side : "both";
+	_updateAttributes(pathPointList, options) {
+		const width = options.width || 0.1;
+		const progress = options.progress !== undefined ? options.progress : 1;
+		const arrow = options.arrow !== undefined ? options.arrow : true;
+		const side = options.side !== undefined ? options.side : "both";
 
-		var halfWidth = width / 2;
-		var sideWidth = (side !== "both" ? width / 2 : width);
-		var totalDistance = pathPointList.distance();
-		var progressDistance = progress * totalDistance;
+		const halfWidth = width / 2;
+		const sideWidth = (side !== "both" ? width / 2 : width);
+		const totalDistance = pathPointList.distance();
+		const progressDistance = progress * totalDistance;
 		if (totalDistance == 0) {
 			return 0;
 		}
-		var sharpUvOffset = halfWidth / sideWidth;
-		var sharpUvOffset2 = halfWidth / totalDistance;
 
-		var generateUv2 = !!this.getAttribute('uv2');
+		const sharpUvOffset = halfWidth / sideWidth;
+		const sharpUvOffset2 = halfWidth / totalDistance;
 
-		var count = 0;
+		const generateUv2 = !!this.getAttribute('uv2');
+
+		let count = 0;
 
 		// modify data
-		var position = [];
-		var normal = [];
-		var uv = [];
-		var uv2 = [];
-		var indices = [];
-		var verticesCount = 0;
+		const position = [];
+		const normal = [];
+		const uv = [];
+		const uv2 = [];
+		const indices = [];
+		let verticesCount = 0;
 
-		var right = new THREE.Vector3();
-		var left = new THREE.Vector3();
+		const right = new THREE.Vector3();
+		const left = new THREE.Vector3();
 
 		// for sharp corners
-		var leftOffset = new THREE.Vector3();
-		var rightOffset = new THREE.Vector3();
-		var tempPoint1 = new THREE.Vector3();
-		var tempPoint2 = new THREE.Vector3();
+		const leftOffset = new THREE.Vector3();
+		const rightOffset = new THREE.Vector3();
+		const tempPoint1 = new THREE.Vector3();
+		const tempPoint2 = new THREE.Vector3();
 
 		function addVertices(pathPoint) {
-			var first = position.length === 0;
-			var sharpCorner = pathPoint.sharp && !first;
+			const first = position.length === 0;
+			const sharpCorner = pathPoint.sharp && !first;
 
-			var uvDist = pathPoint.dist / sideWidth;
-			var uvDist2 = pathPoint.dist / totalDistance;
+			const uvDist = pathPoint.dist / sideWidth;
+			const uvDist2 = pathPoint.dist / totalDistance;
 
-			var dir = pathPoint.dir;
-			var up = pathPoint.up;
-			var _right = pathPoint.right;
+			const dir = pathPoint.dir;
+			const up = pathPoint.up;
+			const _right = pathPoint.right;
 
 			if (side !== "left") {
 				right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
@@ -438,11 +416,11 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 				leftOffset.fromArray(position, position.length - 6).sub(left);
 				rightOffset.fromArray(position, position.length - 3).sub(right);
 
-				var leftDist = leftOffset.length();
-				var rightDist = rightOffset.length();
+				const leftDist = leftOffset.length();
+				const rightDist = rightOffset.length();
 
-				var sideOffset = leftDist - rightDist;
-				var longerOffset, longEdge;
+				const sideOffset = leftDist - rightDist;
+				let longerOffset, longEdge;
 
 				if (sideOffset > 0) {
 					longerOffset = leftOffset;
@@ -568,14 +546,14 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			}
 		}
 
-		var sharp = new THREE.Vector3();
+		const sharp = new THREE.Vector3();
 		function addStart(pathPoint) {
-			var dir = pathPoint.dir;
-			var up = pathPoint.up;
-			var _right = pathPoint.right;
+			const dir = pathPoint.dir;
+			const up = pathPoint.up;
+			const _right = pathPoint.right;
 
-			var uvDist = pathPoint.dist / sideWidth;
-			var uvDist2 = pathPoint.dist / totalDistance;
+			const uvDist = pathPoint.dist / sideWidth;
+			const uvDist2 = pathPoint.dist / totalDistance;
 
 			if (side !== "left") {
 				right.copy(_right).multiplyScalar(halfWidth * 2);
@@ -630,18 +608,18 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			count += 3;
 		}
 
-		var lastPoint;
+		let lastPoint;
 
 		if (progressDistance > 0) {
-			for (var i = 0; i < pathPointList.count; i++) {
-				var pathPoint = pathPointList.array[i];
+			for (let i = 0; i < pathPointList.count; i++) {
+				const pathPoint = pathPointList.array[i];
 
 				if (pathPoint.dist > progressDistance) {
-					var prevPoint =  pathPointList.array[i - 1];
+					const prevPoint =  pathPointList.array[i - 1];
 					lastPoint = new PathPoint();
 
 					// linear lerp for progress
-					var alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
+					const alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
 					lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
 					addVertices(lastPoint);
@@ -660,39 +638,34 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 			addStart(lastPoint);
 		}
 
-		var positionAttribute = this.getAttribute('position');
-		this._resizeAttribute('position', positionAttribute, position.length);
-		positionAttribute = this.getAttribute('position');
+		this._resizeAttribute('position', position.length);
+		const positionAttribute = this.getAttribute('position');
 		positionAttribute.array.set(position, 0);
 		positionAttribute.updateRange.count = position.length;
 		positionAttribute.needsUpdate = true;
 
-		var normalAttribute = this.getAttribute('normal');
-		this._resizeAttribute('normal', normalAttribute, normal.length);
-		normalAttribute = this.getAttribute('normal');
+		this._resizeAttribute('normal', normal.length);
+		const normalAttribute = this.getAttribute('normal');
 		normalAttribute.array.set(normal, 0);
 		normalAttribute.updateRange.count = normal.length;
 		normalAttribute.needsUpdate = true;
 
-		var uvAttribute = this.getAttribute('uv');
-		this._resizeAttribute('uv', uvAttribute, uv.length);
-		uvAttribute = this.getAttribute('uv');
+		this._resizeAttribute('uv', uv.length);
+		const uvAttribute = this.getAttribute('uv');
 		uvAttribute.array.set(uv, 0);
 		uvAttribute.updateRange.count = uv.length;
 		uvAttribute.needsUpdate = true;
 
 		if (generateUv2) {
-			var uv2Attribute = this.getAttribute('uv2');
-			this._resizeAttribute('uv2', uv2Attribute, uv2.length);
-			uv2Attribute = this.getAttribute('uv2');
+			this._resizeAttribute('uv2', uv2.length);
+			const uv2Attribute = this.getAttribute('uv2');
 			uv2Attribute.array.set(uv2, 0);
 			uv2Attribute.updateRange.count = uv2.length;
 			uv2Attribute.needsUpdate = true;
 		}
 
-		var indexAttribute = this.getIndex();
-		this._resizeIndex(indexAttribute, indices.length);
-		indexAttribute = this.getIndex();
+		this._resizeIndex(indices.length);
+		const indexAttribute = this.getIndex();
 		indexAttribute.set(indices, 0);
 		indexAttribute.updateRange.count = indices.length;
 		indexAttribute.needsUpdate = true;
@@ -700,7 +673,7 @@ PathGeometry.prototype = Object.assign(Object.create(THREE.BufferGeometry.protot
 		return count;
 	}
 
-});
+}
 
 /**
  * PathTubeGeometry
@@ -797,39 +770,34 @@ PathTubeGeometry.prototype = Object.assign(Object.create(PathGeometry.prototype)
 			}
 		}
 
+		this._resizeAttribute('position', position.length);
 		var positionAttribute = this.getAttribute('position');
-		this._resizeAttribute('position', positionAttribute, position.length);
-		positionAttribute = this.getAttribute('position');
 		positionAttribute.array.set(position, 0);
 		positionAttribute.updateRange.count = position.length;
 		positionAttribute.needsUpdate = true;
 
+		this._resizeAttribute('normal', normal.length);
 		var normalAttribute = this.getAttribute('normal');
-		this._resizeAttribute('normal', normalAttribute, normal.length);
-		normalAttribute = this.getAttribute('normal');
 		normalAttribute.array.set(normal, 0);
 		normalAttribute.updateRange.count = normal.length;
 		normalAttribute.needsUpdate = true;
 
+		this._resizeAttribute('uv', uv.length);
 		var uvAttribute = this.getAttribute('uv');
-		this._resizeAttribute('uv', uvAttribute, uv.length);
-		uvAttribute = this.getAttribute('uv');
 		uvAttribute.array.set(uv, 0);
 		uvAttribute.updateRange.count = uv.length;
 		uvAttribute.needsUpdate = true;
 
 		if (generateUv2) {
+			this._resizeAttribute('uv2', uv2.length);
 			var uv2Attribute = this.getAttribute('uv2');
-			this._resizeAttribute('uv2', uv2Attribute, uv2.length);
-			uv2Attribute = this.getAttribute('uv2');
 			uv2Attribute.array.set(uv2, 0);
 			uv2Attribute.updateRange.count = uv2.length;
 			uv2Attribute.needsUpdate = true;
 		}
 
+		this._resizeIndex(indices.length);
 		var indexAttribute = this.getIndex();
-		this._resizeIndex(indexAttribute, indices.length);
-		indexAttribute = this.getIndex();
 		indexAttribute.set(indices, 0);
 		indexAttribute.updateRange.count = indices.length;
 		indexAttribute.needsUpdate = true;
