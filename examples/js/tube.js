@@ -11,6 +11,7 @@ window.onload = function() {
     container.appendChild( renderer.domElement );
 
     var controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls.target.set(5, -5, 5)
 
     var ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add( ambientLight );

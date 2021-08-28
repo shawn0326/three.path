@@ -13,7 +13,7 @@ three.path is a three.js extension which provides a 3D path geometry builder.
 
 ````javascript
 
-var list = new THREE.PathPointList();
+const list = new THREE.PathPointList();
 
 /**
  * set points
@@ -23,7 +23,7 @@ var list = new THREE.PathPointList();
  * @param {number} up? force up. default is auto up (calculate by tangent).
  * @param {boolean} close? close path. default is false.
  */
-list.set(points, 0.1, 10);
+list.set(points, 0.1, 10, undefined, false);
 
 ````
 
@@ -33,7 +33,7 @@ Generate PathGeometry.
 
 ````javascript
 
-var geometry = new THREE.PathGeometry();
+const geometry = new THREE.PathGeometry();
 
 // update geometry when pathPointList changed
 geometry.update(pathPointList, {
@@ -49,7 +49,7 @@ Or generate PathTubeGeometry.
 
 ````javascript
 
-var geometry = new THREE.PathTubeGeometry();
+const geometry = new THREE.PathTubeGeometry();
 
 // update geometry when pathPointList changed
 geometry.update(pathPointList, {

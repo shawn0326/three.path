@@ -16,19 +16,15 @@ function _getCornerBezierCurve(last, current, next, cornerRadius, out) {
 	lastDir.normalize();
 	nextDir.normalize();
 
-	if (lastDirLength > cornerRadius) {
-		out.v0.copy(current).sub(lastDir.multiplyScalar(cornerRadius));
-	} else {
-		out.v0.copy(last);
-	}
+	// cornerRadius can not bigger then lineDistance / 2
+	// auto fix this
+	const v0Dist = Math.min(lastDirLength / 2 - Number.EPSILON, cornerRadius);
+	out.v0.copy(current).sub(lastDir.multiplyScalar(v0Dist));
 
 	out.v1.copy(current);
 
-	if (nextDirLength > cornerRadius) {
-		out.v2.copy(current).add(nextDir.multiplyScalar(cornerRadius));
-	} else {
-		out.v2.copy(next);
-	}
+	const v2Dist = Math.min(nextDirLength / 2 - Number.EPSILON, cornerRadius);
+	out.v2.copy(current).add(nextDir.multiplyScalar(v2Dist));
 
 	return out;
 }
