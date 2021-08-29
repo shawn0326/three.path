@@ -33,9 +33,27 @@ Generate PathGeometry.
 
 ````javascript
 
-const geometry = new THREE.PathGeometry();
+/**
+ * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+ * @param {Boolean} [generateUv2=false]
+ */
+// new THREE.PathGeometry()
 
-// update geometry when pathPointList changed
+// Init by max vertex
+const geometry = new THREE.PathGeometry(2000, false);
+// Init by data
+const geometry = new THREE.PathGeometry({
+    pathPointList: pathPointList,
+    options: {
+        width: 0.1, // default is 0.1
+        arrow: true, // default is true
+        progress: 1, // default is 1
+        side: "both" // "left"/"right"/"both", default is "both"
+    },
+    usage: THREE.StaticDrawUsage // geometry usage
+}, false);
+
+// Update geometry when pathPointList changed
 geometry.update(pathPointList, {
     width: 0.1, // default is 0.1
     arrow: true, // default is true
@@ -49,7 +67,25 @@ Or generate PathTubeGeometry.
 
 ````javascript
 
-const geometry = new THREE.PathTubeGeometry();
+/**
+ * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+ * @param {Boolean} [generateUv2=false]
+ */
+// new THREE.PathTubeGeometry()
+
+// Init by max vertex
+const geometry = new THREE.PathTubeGeometry(2000, false);
+// Init by data
+const geometry = new THREE.PathTubeGeometry({
+    pathPointList: pathPointList,
+    options: {
+        radius: 0.1, // default is 0.1
+        radialSegments: 8, // default is 8
+        progress: 1, // default is 1
+        startRad: 0 // default is 0
+    },
+    usage: THREE.StaticDrawUsage // geometry usage
+}, false);
 
 // update geometry when pathPointList changed
 geometry.update(pathPointList, {

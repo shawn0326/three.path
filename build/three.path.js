@@ -57,13 +57,13 @@
 		var lastDirLength = lastDir.length();
 		var nextDirLength = nextDir.length();
 		lastDir.normalize();
-		nextDir.normalize(); // cornerRadius can not bigger then lineDistance / 2
-		// auto fix this
+		nextDir.normalize(); // cornerRadius can not bigger then lineDistance / 2, auto fix this
+		// TODO do not divide by 2 for end points
 
-		var v0Dist = Math.min(lastDirLength / 2 - Number.EPSILON, cornerRadius);
+		var v0Dist = Math.min(lastDirLength - Number.EPSILON * 20, cornerRadius);
 		out.v0.copy(current).sub(lastDir.multiplyScalar(v0Dist));
 		out.v1.copy(current);
-		var v2Dist = Math.min(nextDirLength / 2 - Number.EPSILON, cornerRadius);
+		var v2Dist = Math.min(nextDirLength / 2 - Number.EPSILON * 20, cornerRadius);
 		out.v2.copy(current).add(nextDir.multiplyScalar(v2Dist));
 		return out;
 	}
@@ -340,11 +340,15 @@
 	var PathGeometry = /*#__PURE__*/function (_THREE$BufferGeometry) {
 		_inheritsLoose(PathGeometry, _THREE$BufferGeometry);
 
-		function PathGeometry(maxVertex, generateUv2) {
+		/**
+		 * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+		 * @param {Boolean} [generateUv2=false]
+		 */
+		function PathGeometry(initData, generateUv2) {
 			var _this;
 
-			if (maxVertex === void 0) {
-				maxVertex = 3000;
+			if (initData === void 0) {
+				initData = 3000;
 			}
 
 			if (generateUv2 === void 0) {
@@ -353,22 +357,51 @@
 
 			_this = _THREE$BufferGeometry.call(this) || this;
 
-			_this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
-
-			_this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
-
-			_this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
-
-			if (generateUv2) {
-				_this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+			if (isNaN(initData)) {
+				_this._initByData(initData.pathPointList, initData.options, initData.usage, generateUv2);
+			} else {
+				_this._initByMaxVertex(initData, generateUv2);
 			}
 
-			_this.drawRange.start = 0;
-			_this.drawRange.count = 0;
-
-			_this.setIndex(new Array(maxVertex * 3));
-
 			return _this;
+		}
+
+		var _proto = PathGeometry.prototype;
+
+		_proto._initByMaxVertex = function _initByMaxVertex(maxVertex, generateUv2) {
+			this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
+			this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
+			this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+
+			if (generateUv2) {
+				this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+			}
+
+			this.drawRange.start = 0;
+			this.drawRange.count = 0;
+			this.setIndex(new Array(maxVertex * 3));
+		};
+
+		_proto._initByData = function _initByData(pathPointList, options, usage, generateUv2) {
+			if (options === void 0) {
+				options = {};
+			}
+
+			var vertexData = generatePathVertexData(pathPointList, options, generateUv2);
+
+			if (vertexData && vertexData.count !== 0) {
+				this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || THREE.StaticDrawUsage));
+				this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || THREE.StaticDrawUsage));
+				this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || THREE.StaticDrawUsage));
+
+				if (generateUv2) {
+					this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
+				}
+
+				this.setIndex(vertexData.indices);
+			} else {
+				this._initByMaxVertex(2, generateUv2);
+			}
 		}
 		/**
 		 * Update geometry by PathPointList instance
@@ -379,20 +412,17 @@
 		 * @param {Boolean} [options.arrow=true]
 		 * @param {String} [options.side='both'] - "left"/"right"/"both"
 		 */
-
-
-		var _proto = PathGeometry.prototype;
+		;
 
 		_proto.update = function update(pathPointList, options) {
 			if (options === void 0) {
 				options = {};
 			}
 
-			var vertexData = generatePathVertexData(pathPointList, options);
+			var generateUv2 = !!this.getAttribute('uv2');
+			var vertexData = generatePathVertexData(pathPointList, options, generateUv2);
 
 			if (vertexData) {
-				var generateUv2 = !!this.getAttribute('uv2');
-
 				this._updateAttributes(vertexData.position, vertexData.normal, vertexData.uv, generateUv2 ? vertexData.uv2 : null, vertexData.indices);
 
 				this.drawRange.count = vertexData.count;
@@ -686,8 +716,44 @@
 	var PathTubeGeometry = /*#__PURE__*/function (_PathGeometry) {
 		_inheritsLoose(PathTubeGeometry, _PathGeometry);
 
-		function PathTubeGeometry(maxVertex, generateUv2) {
-			return _PathGeometry.call(this, maxVertex || 1000, generateUv2) || this;
+		/**
+		 * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+		 * @param {Boolean} [generateUv2=false]
+		 */
+		function PathTubeGeometry(initData, generateUv2) {
+			if (initData === void 0) {
+				initData = 1000;
+			}
+
+			if (generateUv2 === void 0) {
+				generateUv2 = false;
+			}
+
+			return _PathGeometry.call(this, initData, generateUv2) || this;
+		}
+
+		var _proto = PathTubeGeometry.prototype;
+
+		_proto._initByData = function _initByData(pathPointList, options, usage, generateUv2) {
+			if (options === void 0) {
+				options = {};
+			}
+
+			var vertexData = generateTubeVertexData(pathPointList, options, generateUv2);
+
+			if (vertexData && vertexData.count !== 0) {
+				this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || THREE.StaticDrawUsage));
+				this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || THREE.StaticDrawUsage));
+				this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || THREE.StaticDrawUsage));
+
+				if (generateUv2) {
+					this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
+				}
+
+				this.setIndex(vertexData.indices);
+			} else {
+				this._initByMaxVertex(2, generateUv2);
+			}
 		}
 		/**
 		 * Update geometry by PathPointList instance
@@ -698,20 +764,17 @@
 		 * @param {Boolean} [options.radialSegments=8]
 		 * @param {String} [options.startRad=0]
 		 */
-
-
-		var _proto = PathTubeGeometry.prototype;
+		;
 
 		_proto.update = function update(pathPointList, options) {
 			if (options === void 0) {
 				options = {};
 			}
 
-			var vertexData = generateTubeVertexData(pathPointList, options);
+			var generateUv2 = !!this.getAttribute('uv2');
+			var vertexData = generateTubeVertexData(pathPointList, options, generateUv2);
 
 			if (vertexData) {
-				var generateUv2 = !!this.getAttribute('uv2');
-
 				this._updateAttributes(vertexData.position, vertexData.normal, vertexData.uv, generateUv2 ? vertexData.uv2 : null, vertexData.indices);
 
 				this.drawRange.count = vertexData.count;

@@ -104,17 +104,24 @@ City.prototype = Object.assign(City.prototype, {
 
             var pathPointList = new THREE.PathPointList();
             pathPointList.set(points, 0, 0, new THREE.Vector3(0, 1, 0));
-            var geometry = new THREE.PathGeometry();
-            geometry._pathPointList = pathPointList;
-            geometry._updateParam = {
+
+            var updateParam = {
                 width: width,
                 arrow: false,
                 progress: 0
             };
-            geometry.update(geometry._pathPointList, geometry._updateParam);
+
+            var geometry = new THREE.PathGeometry({
+                pathPointList: pathPointList,
+                options: updateParam
+            });
+            geometry._pathPointList = pathPointList;
+            geometry._updateParam = updateParam;
 
             geometries.push(geometry);
         }
+
+        console.log(geometries)
 
         return geometries;
     },

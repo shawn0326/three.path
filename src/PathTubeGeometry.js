@@ -6,8 +6,29 @@ import { PathGeometry } from './PathGeometry.js';
  */
 class PathTubeGeometry extends PathGeometry {
 
-	constructor(maxVertex, generateUv2) {
-		super(maxVertex || 1000, generateUv2);
+	/**
+	 * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+	 * @param {Boolean} [generateUv2=false]
+	 */
+	constructor(initData = 1000, generateUv2 = false) {
+		super(initData, generateUv2);
+	}
+
+	_initByData(pathPointList, options = {}, usage, generateUv2) {
+		const vertexData = generateTubeVertexData(pathPointList, options, generateUv2);
+
+		if (vertexData && vertexData.count !== 0) {
+			this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || THREE.StaticDrawUsage));
+			this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || THREE.StaticDrawUsage));
+			this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || THREE.StaticDrawUsage));
+			if (generateUv2) {
+				this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
+			}
+
+			this.setIndex(vertexData.indices);
+		} else {
+			this._initByMaxVertex(2, generateUv2);
+		}
 	}
 
 	/**
@@ -20,10 +41,11 @@ class PathTubeGeometry extends PathGeometry {
 	 * @param {String} [options.startRad=0]
 	 */
 	update(pathPointList, options = {}) {
-		const vertexData = generateTubeVertexData(pathPointList, options);
+		const generateUv2 = !!this.getAttribute('uv2');
+
+		const vertexData = generateTubeVertexData(pathPointList, options, generateUv2);
 
 		if (vertexData) {
-			const generateUv2 = !!this.getAttribute('uv2');
 			this._updateAttributes(vertexData.position, vertexData.normal, vertexData.uv, generateUv2 ? vertexData.uv2 : null, vertexData.indices);
 			this.drawRange.count = vertexData.count;
 		} else {
