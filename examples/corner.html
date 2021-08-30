@@ -71,7 +71,7 @@
 
     // create PathPointList
     var pathPointList = new THREE.PathPointList();
-    pathPointList.set(points, 0.3, 10, up, false);
+    pathPointList.set(points, 0.3, 10, up, true);
 
     // create geometry
     var width = 0.2;
@@ -125,13 +125,13 @@
     });
     gui.add( params, 'playSpeed').min(0.01).max(0.2);
     gui.add( params, 'cornerRadius').min(0).max(10).onChange(function(val) {
-        pathPointList.set(points, params.cornerRadius, params.cornerSplit, up, false);
+        pathPointList.set(points, params.cornerRadius, params.cornerSplit, up, true);
         geometry.update(pathPointList, {
             width: params.width
         });
     });
     gui.add( params, 'cornerSplit').min(0).max(30).step(1).onChange(function(val) {
-        pathPointList.set(points, params.cornerRadius, params.cornerSplit, up, false);
+        pathPointList.set(points, params.cornerRadius, params.cornerSplit, up, true);
         geometry.update(pathPointList, {
             width: params.width
         });

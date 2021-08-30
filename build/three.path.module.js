@@ -40,7 +40,7 @@ const helpVec3_3 = new THREE.Vector3();
 const helpMat4 = new THREE.Matrix4();
 const helpCurve = new THREE.QuadraticBezierCurve3();
 
-function _getCornerBezierCurve(last, current, next, cornerRadius, out) {
+function _getCornerBezierCurve(last, current, next, cornerRadius, firstCorner, out) {
 	const lastDir = helpVec3_1.subVectors(current, last);
 	const nextDir = helpVec3_2.subVectors(next, current);
 
@@ -51,13 +51,12 @@ function _getCornerBezierCurve(last, current, next, cornerRadius, out) {
 	nextDir.normalize();
 
 	// cornerRadius can not bigger then lineDistance / 2, auto fix this
-	// TODO do not divide by 2 for end points
-	const v0Dist = Math.min(lastDirLength - Number.EPSILON * 20, cornerRadius);
+	const v0Dist = Math.min((firstCorner ? lastDirLength / 2 : lastDirLength) * 0.999999, cornerRadius);
 	out.v0.copy(current).sub(lastDir.multiplyScalar(v0Dist));
 
 	out.v1.copy(current);
 
-	const v2Dist = Math.min(nextDirLength / 2 - Number.EPSILON * 20, cornerRadius);
+	const v2Dist = Math.min(nextDirLength / 2 * 0.999999, cornerRadius);
 	out.v2.copy(current).add(nextDir.multiplyScalar(v2Dist));
 
 	return out;
@@ -207,7 +206,7 @@ class PathPointList {
 	_corner(current, next, cornerRadius, cornerSplit, up) {
 		if (cornerRadius > 0 && cornerSplit > 0) {
 			const lastPoint = this.array[this.count - 1];
-			const curve = _getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, helpCurve);
+			const curve = _getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, (this.count - 1) === 0, helpCurve);
 			const samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
 
 			for (let f = 0; f < cornerSplit; f++) {

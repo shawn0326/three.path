@@ -51,19 +51,18 @@
 	var helpMat4 = new THREE.Matrix4();
 	var helpCurve = new THREE.QuadraticBezierCurve3();
 
-	function _getCornerBezierCurve(last, current, next, cornerRadius, out) {
+	function _getCornerBezierCurve(last, current, next, cornerRadius, firstCorner, out) {
 		var lastDir = helpVec3_1.subVectors(current, last);
 		var nextDir = helpVec3_2.subVectors(next, current);
 		var lastDirLength = lastDir.length();
 		var nextDirLength = nextDir.length();
 		lastDir.normalize();
 		nextDir.normalize(); // cornerRadius can not bigger then lineDistance / 2, auto fix this
-		// TODO do not divide by 2 for end points
 
-		var v0Dist = Math.min(lastDirLength - Number.EPSILON * 20, cornerRadius);
+		var v0Dist = Math.min((firstCorner ? lastDirLength / 2 : lastDirLength) * 0.999999, cornerRadius);
 		out.v0.copy(current).sub(lastDir.multiplyScalar(v0Dist));
 		out.v1.copy(current);
-		var v2Dist = Math.min(nextDirLength / 2 - Number.EPSILON * 20, cornerRadius);
+		var v2Dist = Math.min(nextDirLength / 2 * 0.999999, cornerRadius);
 		out.v2.copy(current).add(nextDir.multiplyScalar(v2Dist));
 		return out;
 	}
@@ -237,7 +236,7 @@
 			if (cornerRadius > 0 && cornerSplit > 0) {
 				var lastPoint = this.array[this.count - 1];
 
-				var curve = _getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, helpCurve);
+				var curve = _getCornerBezierCurve(lastPoint.pos, current, next, cornerRadius, this.count - 1 === 0, helpCurve);
 
 				var samplerPoints = curve.getPoints(cornerSplit); // TODO optimize
 
