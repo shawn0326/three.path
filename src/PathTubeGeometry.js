@@ -89,7 +89,7 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 		const uvDist2 = pathPoint.dist / totalDistance;
 
 		for (let r = 0; r <= radialSegments; r++) {
-			const _r = r;
+			let _r = r;
 			if (_r == radialSegments) {
 				_r = 0;
 			}
