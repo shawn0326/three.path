@@ -378,7 +378,7 @@
 
 			this.drawRange.start = 0;
 			this.drawRange.count = 0;
-			this.setIndex(new Array(maxVertex * 3));
+			this.setIndex(maxVertex > 65536 ? new THREE.Uint32BufferAttribute(maxVertex * 3, 1) : new THREE.Uint16BufferAttribute(maxVertex * 3, 1));
 		};
 
 		_proto._initByData = function _initByData(pathPointList, options, usage, generateUv2) {
@@ -397,7 +397,7 @@
 					this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
 				}
 
-				this.setIndex(vertexData.indices);
+				this.setIndex(vertexData.position.length / 3 > 65536 ? new THREE.Uint32BufferAttribute(vertexData.indices, 1) : new THREE.Uint16BufferAttribute(vertexData.indices, 1));
 			} else {
 				this._initByMaxVertex(2, generateUv2);
 			}
@@ -749,7 +749,7 @@
 					this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
 				}
 
-				this.setIndex(vertexData.indices);
+				this.setIndex(vertexData.position.length / 3 > 65536 ? new THREE.Uint32BufferAttribute(vertexData.indices, 1) : new THREE.Uint16BufferAttribute(vertexData.indices, 1));
 			} else {
 				this._initByMaxVertex(2, generateUv2);
 			}

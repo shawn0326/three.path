@@ -25,7 +25,10 @@ class PathTubeGeometry extends PathGeometry {
 				this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
 			}
 
-			this.setIndex(vertexData.indices);
+			this.setIndex((vertexData.position.length / 3) > 65536 ?
+				new THREE.Uint32BufferAttribute(vertexData.indices, 1) :
+				new THREE.Uint16BufferAttribute(vertexData.indices, 1)
+			);
 		} else {
 			this._initByMaxVertex(2, generateUv2);
 		}
