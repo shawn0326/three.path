@@ -1,7 +1,7 @@
 three.path
 ===================
 
-three.path is a three.js extension which provides a 3D path geometry builder.
+`three.path` is an extension for `three.js` that facilitates the creation of 3D path geometries.
 
 ![image](./examples/images/screenshot4.png)
 
