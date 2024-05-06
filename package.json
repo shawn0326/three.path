@@ -1,6 +1,6 @@
 {
   "name": "three.path",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "three.path is an extension for three.js that facilitates the creation of 3D path geometries.",
   "type": "module",
   "main": "./build/three.path.js",
