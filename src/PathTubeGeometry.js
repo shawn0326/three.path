@@ -1,3 +1,4 @@
+import { BufferAttribute, Uint32BufferAttribute, Uint16BufferAttribute, StaticDrawUsage, Vector3 } from 'three';
 import { PathPoint } from './PathPoint.js';
 import { PathGeometry } from './PathGeometry.js';
 
@@ -7,8 +8,8 @@ import { PathGeometry } from './PathGeometry.js';
 class PathTubeGeometry extends PathGeometry {
 
 	/**
-	 * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
-	 * @param {Boolean} [generateUv2=false]
+	 * @param {object|number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+	 * @param {boolean} [generateUv2=false]
 	 */
 	constructor(initData = 1000, generateUv2 = false) {
 		super(initData, generateUv2);
@@ -18,16 +19,16 @@ class PathTubeGeometry extends PathGeometry {
 		const vertexData = generateTubeVertexData(pathPointList, options, generateUv2);
 
 		if (vertexData && vertexData.count !== 0) {
-			this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || THREE.StaticDrawUsage));
-			this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || THREE.StaticDrawUsage));
-			this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || THREE.StaticDrawUsage));
+			this.setAttribute('position', new BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || StaticDrawUsage));
+			this.setAttribute('normal', new BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || StaticDrawUsage));
+			this.setAttribute('uv', new BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || StaticDrawUsage));
 			if (generateUv2) {
-				this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
+				this.setAttribute('uv2', new BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || StaticDrawUsage));
 			}
 
 			this.setIndex((vertexData.position.length / 3) > 65536 ?
-				new THREE.Uint32BufferAttribute(vertexData.indices, 1) :
-				new THREE.Uint16BufferAttribute(vertexData.indices, 1)
+				new Uint32BufferAttribute(vertexData.indices, 1) :
+				new Uint16BufferAttribute(vertexData.indices, 1)
 			);
 		} else {
 			this._initByMaxVertex(2, generateUv2);
@@ -58,8 +59,6 @@ class PathTubeGeometry extends PathGeometry {
 
 }
 
-export { PathTubeGeometry };
-
 // Vertex Data Generate Functions
 
 function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
@@ -85,7 +84,7 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 	const indices = [];
 	let verticesCount = 0;
 
-	const normalDir = new THREE.Vector3();
+	const normalDir = new Vector3();
 	function addVertices(pathPoint, radius, radialSegments) {
 		const first = position.length === 0;
 		const uvDist = pathPoint.dist / circum;
@@ -129,7 +128,7 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 			const pathPoint = pathPointList.array[i];
 
 			if (pathPoint.dist > progressDistance) {
-				const prevPoint =  pathPointList.array[i - 1];
+				const prevPoint = pathPointList.array[i - 1];
 				const lastPoint = new PathPoint();
 
 				// linear lerp for progress
@@ -153,3 +152,5 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 		count
 	};
 }
+
+export { PathTubeGeometry };

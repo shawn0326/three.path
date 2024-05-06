@@ -1,13 +1,15 @@
+import { Vector3 } from 'three';
+
 /**
  * PathPoint
  */
 class PathPoint {
 
 	constructor() {
-		this.pos = new THREE.Vector3();
-		this.dir = new THREE.Vector3();
-		this.right = new THREE.Vector3();
-		this.up = new THREE.Vector3(); // normal
+		this.pos = new Vector3();
+		this.dir = new Vector3();
+		this.right = new Vector3();
+		this.up = new Vector3(); // normal
 		this.dist = 0; // distance from start
 		this.widthScale = 1; // for corner
 		this.sharp = false; // marks as sharp corner

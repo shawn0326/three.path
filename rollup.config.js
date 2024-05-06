@@ -9,9 +9,9 @@ const babelrc = {
 				modules: false,
 				targets: '>0.3%, not dead',
 				loose: true,
-				bugfixes: true,
-			},
-		],
+				bugfixes: true
+			}
+		]
 	]
 };
 
@@ -49,11 +49,13 @@ export default [
 			babelCleanup(),
 			header()
 		],
+		external: ['three'],
 		output: {
 			format: 'umd',
-			file: 'build/three.path.js',
 			name: 'THREE',
-			extend: true
+			extend: true,
+			file: 'build/three.path.js',
+			globals: { 'three': 'THREE' }
 		}
 	},
 	{
@@ -68,11 +70,13 @@ export default [
 			terser(),
 			header()
 		],
+		external: ['three'],
 		output: {
 			format: 'umd',
-			file: 'build/three.path.min.js',
 			name: 'THREE',
-			extend: true
+			extend: true,
+			file: 'build/three.path.min.js',
+			globals: { 'three': 'THREE' }
 		}
 	},
 	{
@@ -80,6 +84,7 @@ export default [
 		plugins: [
 			header()
 		],
+		external: ['three'],
 		output: {
 			format: 'esm',
 			file: 'build/three.path.module.js'

@@ -35,7 +35,9 @@
     "@babel/preset-env": "^7.15.0",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-terser": "^0.4.4",
-    "eslint": "^9.1.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-html": "^8.1.1",
+    "eslint-plugin-import": "^2.29.1",
     "rollup": "^4.17.2"
   },
   "peerDependencies": {

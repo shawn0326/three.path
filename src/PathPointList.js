@@ -1,32 +1,5 @@
+import { Vector3, Matrix4, QuadraticBezierCurve3 } from 'three';
 import { PathPoint } from './PathPoint.js';
-
-const helpVec3_1 = new THREE.Vector3();
-const helpVec3_2 = new THREE.Vector3();
-const helpVec3_3 = new THREE.Vector3();
-const helpMat4 = new THREE.Matrix4();
-const helpCurve = new THREE.QuadraticBezierCurve3();
-
-function _getCornerBezierCurve(last, current, next, cornerRadius, firstCorner, out) {
-	const lastDir = helpVec3_1.subVectors(current, last);
-	const nextDir = helpVec3_2.subVectors(next, current);
-
-	const lastDirLength = lastDir.length();
-	const nextDirLength = nextDir.length();
-
-	lastDir.normalize();
-	nextDir.normalize();
-
-	// cornerRadius can not bigger then lineDistance / 2, auto fix this
-	const v0Dist = Math.min((firstCorner ? lastDirLength / 2 : lastDirLength) * 0.999999, cornerRadius);
-	out.v0.copy(current).sub(lastDir.multiplyScalar(v0Dist));
-
-	out.v1.copy(current);
-
-	const v2Dist = Math.min(nextDirLength / 2 * 0.999999, cornerRadius);
-	out.v2.copy(current).add(nextDir.multiplyScalar(v2Dist));
-
-	return out;
-}
 
 /**
  * PathPointList
@@ -41,7 +14,7 @@ class PathPointList {
 
 	/**
 	 * Set points
-	 * @param {THREE.Vector3[]} points key points array
+	 * @param {Vector3[]} points key points array
 	 * @param {number} cornerRadius? the corner radius. set 0 to disable round corner. default is 0.1
 	 * @param {number} cornerSplit? the corner split. default is 10.
 	 * @param {number} up? force up. default is auto up (calculate by tangent).
@@ -51,14 +24,14 @@ class PathPointList {
 		points = points.slice(0);
 
 		if (points.length < 2) {
-			console.warn("PathPointList: points length less than 2.");
+			console.warn('PathPointList: points length less than 2.');
 			this.count = 0;
 			return;
 		}
 
 		// Auto close
 		if (close && !points[0].equals(points[points.length - 1])) {
-			points.push(new THREE.Vector3().copy(points[0]));
+			points.push(new Vector3().copy(points[0]));
 		}
 
 		// Generate path point list
@@ -241,6 +214,34 @@ class PathPointList {
 		this.count++;
 	}
 
+}
+
+const helpVec3_1 = new Vector3();
+const helpVec3_2 = new Vector3();
+const helpVec3_3 = new Vector3();
+const helpMat4 = new Matrix4();
+const helpCurve = new QuadraticBezierCurve3();
+
+function _getCornerBezierCurve(last, current, next, cornerRadius, firstCorner, out) {
+	const lastDir = helpVec3_1.subVectors(current, last);
+	const nextDir = helpVec3_2.subVectors(next, current);
+
+	const lastDirLength = lastDir.length();
+	const nextDirLength = nextDir.length();
+
+	lastDir.normalize();
+	nextDir.normalize();
+
+	// cornerRadius can not bigger then lineDistance / 2, auto fix this
+	const v0Dist = Math.min((firstCorner ? lastDirLength / 2 : lastDirLength) * 0.999999, cornerRadius);
+	out.v0.copy(current).sub(lastDir.multiplyScalar(v0Dist));
+
+	out.v1.copy(current);
+
+	const v2Dist = Math.min(nextDirLength / 2 * 0.999999, cornerRadius);
+	out.v2.copy(current).add(nextDir.multiplyScalar(v2Dist));
+
+	return out;
 }
 
 export { PathPointList };

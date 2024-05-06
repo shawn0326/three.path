@@ -1,13 +1,14 @@
+import { BufferGeometry, BufferAttribute, Uint32BufferAttribute, Uint16BufferAttribute, DynamicDrawUsage, StaticDrawUsage, Vector3 } from 'three';
 import { PathPoint } from './PathPoint.js';
 
 /**
  * PathGeometry
  */
-class PathGeometry extends THREE.BufferGeometry {
+class PathGeometry extends BufferGeometry {
 
 	/**
-	 * @param {Object|Number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
-	 * @param {Boolean} [generateUv2=false]
+	 * @param {object|number} initData - If initData is number, geometry init by empty data and set it as the max vertex. If initData is Object, it contains pathPointList and options.
+	 * @param {boolean} [generateUv2=false]
 	 */
 	constructor(initData = 3000, generateUv2 = false) {
 		super();
@@ -20,36 +21,36 @@ class PathGeometry extends THREE.BufferGeometry {
 	}
 
 	_initByMaxVertex(maxVertex, generateUv2) {
-		this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
-		this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(THREE.DynamicDrawUsage));
-		this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+		this.setAttribute('position', new BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(DynamicDrawUsage));
+		this.setAttribute('normal', new BufferAttribute(new Float32Array(maxVertex * 3), 3).setUsage(DynamicDrawUsage));
+		this.setAttribute('uv', new BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(DynamicDrawUsage));
 		if (generateUv2) {
-			this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(THREE.DynamicDrawUsage));
+			this.setAttribute('uv2', new BufferAttribute(new Float32Array(maxVertex * 2), 2).setUsage(DynamicDrawUsage));
 		}
 
 		this.drawRange.start = 0;
 		this.drawRange.count = 0;
 
 		this.setIndex(maxVertex > 65536 ?
-			new THREE.Uint32BufferAttribute(maxVertex * 3, 1) :
-			new THREE.Uint16BufferAttribute(maxVertex * 3, 1)
+			new Uint32BufferAttribute(maxVertex * 3, 1) :
+			new Uint16BufferAttribute(maxVertex * 3, 1)
 		);
 	}
 
-	_initByData(pathPointList, options = {}, usage,  generateUv2) {
+	_initByData(pathPointList, options = {}, usage, generateUv2) {
 		const vertexData = generatePathVertexData(pathPointList, options, generateUv2);
 
 		if (vertexData && vertexData.count !== 0) {
-			this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || THREE.StaticDrawUsage));
-			this.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || THREE.StaticDrawUsage));
-			this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || THREE.StaticDrawUsage));
+			this.setAttribute('position', new BufferAttribute(new Float32Array(vertexData.position), 3).setUsage(usage || StaticDrawUsage));
+			this.setAttribute('normal', new BufferAttribute(new Float32Array(vertexData.normal), 3).setUsage(usage || StaticDrawUsage));
+			this.setAttribute('uv', new BufferAttribute(new Float32Array(vertexData.uv), 2).setUsage(usage || StaticDrawUsage));
 			if (generateUv2) {
-				this.setAttribute('uv2', new THREE.BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || THREE.StaticDrawUsage));
+				this.setAttribute('uv2', new BufferAttribute(new Float32Array(vertexData.uv2), 2).setUsage(usage || StaticDrawUsage));
 			}
 
 			this.setIndex((vertexData.position.length / 3) > 65536 ?
-				new THREE.Uint32BufferAttribute(vertexData.indices, 1) :
-				new THREE.Uint16BufferAttribute(vertexData.indices, 1)
+				new Uint32BufferAttribute(vertexData.indices, 1) :
+				new Uint16BufferAttribute(vertexData.indices, 1)
 			);
 		} else {
 			this._initByMaxVertex(2, generateUv2);
@@ -82,7 +83,7 @@ class PathGeometry extends THREE.BufferGeometry {
 		let attribute = this.getAttribute(name);
 		while (attribute.array.length < len) {
 			const oldLength = attribute.array.length;
-			const newAttribute = new THREE.BufferAttribute(
+			const newAttribute = new BufferAttribute(
 				new Float32Array(oldLength * 2),
 				attribute.itemSize,
 				attribute.normalized
@@ -98,7 +99,7 @@ class PathGeometry extends THREE.BufferGeometry {
 		let index = this.getIndex();
 		while (index.array.length < len) {
 			const oldLength = index.array.length;
-			const newIndex = new THREE.BufferAttribute(
+			const newIndex = new BufferAttribute(
 				oldLength * 2 > 65535 ? new Uint32Array(oldLength * 2) : new Uint16Array(oldLength * 2),
 				1
 			);
@@ -113,39 +114,62 @@ class PathGeometry extends THREE.BufferGeometry {
 		this._resizeAttribute('position', position.length);
 		const positionAttribute = this.getAttribute('position');
 		positionAttribute.array.set(position, 0);
-		positionAttribute.updateRange.count = position.length;
+		if (positionAttribute.addUpdateRange) {
+			positionAttribute.clearUpdateRanges();
+			positionAttribute.addUpdateRange(0, position.length);
+		} else { // compatibility with r158 earlier
+			positionAttribute.updateRange.count = position.length;
+		}
 		positionAttribute.needsUpdate = true;
 
 		this._resizeAttribute('normal', normal.length);
 		const normalAttribute = this.getAttribute('normal');
 		normalAttribute.array.set(normal, 0);
-		normalAttribute.updateRange.count = normal.length;
+		if (normalAttribute.addUpdateRange) {
+			normalAttribute.clearUpdateRanges();
+			normalAttribute.addUpdateRange(0, normal.length);
+		} else { // compatibility with r158 earlier
+			normalAttribute.updateRange.count = normal.length;
+		}
 		normalAttribute.needsUpdate = true;
 
 		this._resizeAttribute('uv', uv.length);
 		const uvAttribute = this.getAttribute('uv');
 		uvAttribute.array.set(uv, 0);
-		uvAttribute.updateRange.count = uv.length;
+		if (uvAttribute.addUpdateRange) {
+			uvAttribute.clearUpdateRanges();
+			uvAttribute.addUpdateRange(0, uv.length);
+		} else { // compatibility with r158 earlier
+			uvAttribute.updateRange.count = uv.length;
+		}
 		uvAttribute.needsUpdate = true;
 
 		if (uv2) {
 			this._resizeAttribute('uv2', uv2.length);
 			const uv2Attribute = this.getAttribute('uv2');
 			uv2Attribute.array.set(uv2, 0);
-			uv2Attribute.updateRange.count = uv2.length;
+			if (uv2Attribute.addUpdateRange) {
+				uv2Attribute.clearUpdateRanges();
+				uv2Attribute.addUpdateRange(0, uv2.length);
+			} else { // compatibility with r158 earlier
+				uv2Attribute.updateRange.count = uv2.length;
+			}
 			uv2Attribute.needsUpdate = true;
 		}
 
 		this._resizeIndex(indices.length);
 		const indexAttribute = this.getIndex();
 		indexAttribute.set(indices, 0);
-		indexAttribute.updateRange.count = indices.length;
+		if (indexAttribute.addUpdateRange) {
+			indexAttribute.clearUpdateRanges();
+			indexAttribute.addUpdateRange(0, indices.length);
+		} else { // compatibility with r158 earlier
+			indexAttribute.updateRange.count = indices.length;
+		}
 		indexAttribute.needsUpdate = true;
 	}
 
 }
-
-export { PathGeometry };
 
 // Vertex Data Generate Functions
 
@@ -153,10 +177,10 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 	const width = options.width || 0.1;
 	const progress = options.progress !== undefined ? options.progress : 1;
 	const arrow = options.arrow !== undefined ? options.arrow : true;
-	const side = options.side !== undefined ? options.side : "both";
+	const side = options.side !== undefined ? options.side : 'both';
 
 	const halfWidth = width / 2;
-	const sideWidth = (side !== "both" ? width / 2 : width);
+	const sideWidth = (side !== 'both' ? width / 2 : width);
 	const totalDistance = pathPointList.distance();
 	const progressDistance = progress * totalDistance;
 	if (totalDistance == 0) {
@@ -176,14 +200,14 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 	const indices = [];
 	let verticesCount = 0;
 
-	const right = new THREE.Vector3();
-	const left = new THREE.Vector3();
+	const right = new Vector3();
+	const left = new Vector3();
 
 	// for sharp corners
-	const leftOffset = new THREE.Vector3();
-	const rightOffset = new THREE.Vector3();
-	const tempPoint1 = new THREE.Vector3();
-	const tempPoint2 = new THREE.Vector3();
+	const leftOffset = new Vector3();
+	const rightOffset = new Vector3();
+	const tempPoint1 = new Vector3();
+	const tempPoint2 = new Vector3();
 
 	function addVertices(pathPoint) {
 		const first = position.length === 0;
@@ -196,13 +220,13 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 		const up = pathPoint.up;
 		const _right = pathPoint.right;
 
-		if (side !== "left") {
+		if (side !== 'left') {
 			right.copy(_right).multiplyScalar(halfWidth * pathPoint.widthScale);
 		} else {
 			right.set(0, 0, 0);
 		}
 
-		if (side !== "right") {
+		if (side !== 'right') {
 			left.copy(_right).multiplyScalar(-halfWidth * pathPoint.widthScale);
 		} else {
 			left.set(0, 0, 0);
@@ -231,9 +255,9 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 
 			tempPoint1.copy(longerOffset).setLength(Math.abs(sideOffset)).add(longEdge);
 
-			let _cos = tempPoint2.copy(longEdge).sub(tempPoint1).normalize().dot(dir);
-			let _len = tempPoint2.copy(longEdge).sub(tempPoint1).length();
-			let _dist = _cos * _len * 2;
+			const _cos = tempPoint2.copy(longEdge).sub(tempPoint1).normalize().dot(dir);
+			const _len = tempPoint2.copy(longEdge).sub(tempPoint1).length();
+			const _dist = _cos * _len * 2;
 
 			tempPoint2.copy(dir).setLength(_dist).add(tempPoint1);
 
@@ -345,7 +369,7 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 		}
 	}
 
-	const sharp = new THREE.Vector3();
+	const sharp = new Vector3();
 	function addStart(pathPoint) {
 		const dir = pathPoint.dir;
 		const up = pathPoint.up;
@@ -354,13 +378,13 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 		const uvDist = pathPoint.dist / sideWidth;
 		const uvDist2 = pathPoint.dist / totalDistance;
 
-		if (side !== "left") {
+		if (side !== 'left') {
 			right.copy(_right).multiplyScalar(halfWidth * 2);
 		} else {
 			right.set(0, 0, 0);
 		}
 
-		if (side !== "right") {
+		if (side !== 'right') {
 			left.copy(_right).multiplyScalar(-halfWidth * 2);
 		} else {
 			left.set(0, 0, 0);
@@ -385,16 +409,16 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 		);
 
 		uv.push(
-			uvDist, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
-			uvDist, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
-			uvDist + 1.5, side !== "both" ? 0 : 0.5
+			uvDist, side !== 'both' ? (side !== 'right' ? -2 : 0) : -0.5,
+			uvDist, side !== 'both' ? (side !== 'left' ? 2 : 0) : 1.5,
+			uvDist + 1.5, side !== 'both' ? 0 : 0.5
 		);
 
 		if (generateUv2) {
 			uv2.push(
-				uvDist2, side !== "both" ? (side !== "right" ? -2 : 0) : -0.5,
-				uvDist2, side !== "both" ? (side !== "left" ? 2 : 0) : 1.5,
-				uvDist2 + (1.5 * width / totalDistance), side !== "both" ? 0 : 0.5
+				uvDist2, side !== 'both' ? (side !== 'right' ? -2 : 0) : -0.5,
+				uvDist2, side !== 'both' ? (side !== 'left' ? 2 : 0) : 1.5,
+				uvDist2 + (1.5 * width / totalDistance), side !== 'both' ? 0 : 0.5
 			);
 		}
 
@@ -414,7 +438,7 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 			const pathPoint = pathPointList.array[i];
 
 			if (pathPoint.dist > progressDistance) {
-				const prevPoint =  pathPointList.array[i - 1];
+				const prevPoint = pathPointList.array[i - 1];
 				lastPoint = new PathPoint();
 
 				// linear lerp for progress
@@ -446,3 +470,5 @@ function generatePathVertexData(pathPointList, options, generateUv2 = false) {
 		count
 	};
 }
+
+export { PathGeometry };
