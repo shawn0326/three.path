@@ -67,13 +67,29 @@ window.onload = function() {
 	const tube = new THREE.Mesh(geometry, material);
 	scene.add(tube);
 
-	const params = { useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, radius: 0.2, radialSegments: 8, cornerRadius: 0.3, cornerSplit: 10, progress: 1, playSpeed: 0.14 };
+	const params = { 
+        useTexture: true, 
+        color: [88, 222, 222], 
+        scrollUV: true, 
+        scrollSpeed: 0.03, 
+        radius: 0.2, 
+        radialSegments: 8, 
+        cornerRadius: 0.3, 
+        cornerSplit: 10, 
+        progress: 1, 
+        playSpeed: 0.14,
+        wireframe: false
+    };
 	const gui = new dat.GUI();
 
 	gui.add(params, 'useTexture').onChange(function(val) {
 		material.map = val ? texture : null;
 		material.needsUpdate = true;
 	});
+    gui.add(params, 'wireframe').onChange(function(val) {
+        material.wireframe = val;
+        material.needsUpdate = true;
+    });
 	gui.addColor(params, 'color').onChange(function(value) {
 		material.color.r = value[0] / 255;
 		material.color.g = value[1] / 255;
