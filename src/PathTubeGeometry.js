@@ -66,6 +66,8 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 	const progress = options.progress !== undefined ? options.progress : 1;
 	const radialSegments = Math.max(2, options.radialSegments || 8);
 	const startRad = options.startRad || 0;
+	const generateFlatStartCap = options.generateFlatStartCap || false;
+	const generateFlatEndCap = options.generateFlatEndCap || false;
 
 	const circum = radius * 2 * Math.PI;
 	const totalDistance = pathPointList.distance();
@@ -124,6 +126,9 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 	}
 
 	if (progressDistance > 0) {
+		const _firstPoint = pathPointList.array[0];
+		let _lastPoint = pathPointList.array[pathPointList.count - 1];
+
 		for (let i = 0; i < pathPointList.count; i++) {
 			const pathPoint = pathPointList.array[i];
 
@@ -135,10 +140,54 @@ function generateTubeVertexData(pathPointList, options, generateUv2 = false) {
 				const alpha = (progressDistance - prevPoint.dist) / (pathPoint.dist - prevPoint.dist);
 				lastPoint.lerpPathPoints(prevPoint, pathPoint, alpha);
 
+				_lastPoint = lastPoint;
+
 				addVertices(lastPoint, radius, radialSegments);
 				break;
 			} else {
 				addVertices(pathPoint, radius, radialSegments);
+			}
+		}
+
+		if (radialSegments >= 3 && generateFlatEndCap) {
+			normalDir.copy(_lastPoint.dir);
+			normalDir.normalize();
+
+			for (let r = verticesCount - radialSegments, l = verticesCount; r < l; r++) {
+				position.push(position[r * 3], position[r * 3 + 1], position[r * 3 + 2]);
+				uv.push(uv[r * 2], uv[r * 2 + 1]);
+				if (generateUv2) {
+					uv2.push(uv2[r * 2], uv2[r * 2 + 1]);
+				}
+				normal.push(normalDir.x, normalDir.y, normalDir.z);
+				verticesCount++;
+			}
+
+			const index = verticesCount - radialSegments;
+			for (let i = 0; i < radialSegments - 2; i++) {
+				indices.push(index, index + i + 1, index + i + 2);
+				count += 3;
+			}
+		}
+
+		if (radialSegments >= 3 && generateFlatStartCap) {
+			normalDir.copy(_firstPoint.dir);
+			normalDir.normalize();
+
+			for (let r = 0; r < radialSegments; r++) {
+				position.push(position[r * 3], position[r * 3 + 1], position[r * 3 + 2]);
+				uv.push(uv[r * 2], uv[r * 2 + 1]);
+				if (generateUv2) {
+					uv2.push(uv2[r * 2], uv2[r * 2 + 1]);
+				}
+				normal.push(-normalDir.x, -normalDir.y, -normalDir.z);
+				verticesCount++;
+			}
+
+			const index = verticesCount - radialSegments;
+			for (let i = 0; i < radialSegments - 2; i++) {
+				indices.push(index, index + i + 2, index + i + 1);
+				count += 3;
 			}
 		}
 	}
