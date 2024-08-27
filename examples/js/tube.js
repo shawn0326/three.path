@@ -46,7 +46,7 @@ window.onload = function() {
 	const radius = 0.2;
 	const geometry = new THREE.PathTubeGeometry({
 		pathPointList: pathPointList,
-		options: { radius: radius },
+		options: { radius: radius, generateFlatStartCap: true, generateFlatEndCap: true },
 		usage: THREE.DynamicDrawUsage
 	});
 
@@ -67,11 +67,29 @@ window.onload = function() {
 	const tube = new THREE.Mesh(geometry, material);
 	scene.add(tube);
 
-	const params = { useTexture: true, color: [88, 222, 222], scrollUV: true, scrollSpeed: 0.03, radius: 0.2, radialSegments: 8, cornerRadius: 0.3, cornerSplit: 10, progress: 1, playSpeed: 0.14 };
+	const params = {
+		useTexture: true,
+		color: [88, 222, 222],
+		scrollUV: true,
+		scrollSpeed: 0.03,
+		radius: 0.2,
+		radialSegments: 8,
+		cornerRadius: 0.3,
+		cornerSplit: 10,
+		progress: 1,
+		playSpeed: 0.14,
+		wireframe: false,
+		startCap: true,
+		endCap: true
+	};
 	const gui = new dat.GUI();
 
 	gui.add(params, 'useTexture').onChange(function(val) {
 		material.map = val ? texture : null;
+		material.needsUpdate = true;
+	});
+	gui.add(params, 'wireframe').onChange(function(val) {
+		material.wireframe = val;
 		material.needsUpdate = true;
 	});
 	gui.addColor(params, 'color').onChange(function(value) {
@@ -85,20 +103,26 @@ window.onload = function() {
 	gui.add(params, 'radius').min(0.1).max(1).onChange(function() {
 		geometry.update(pathPointList, {
 			radius: params.radius,
-			radialSegments: params.radialSegments
+			radialSegments: params.radialSegments,
+			generateFlatStartCap: params.startCap,
+			generateFlatEndCap: params.endCap
 		});
 	});
 	gui.add(params, 'radialSegments').min(2).max(10).step(1).onChange(function() {
 		geometry.update(pathPointList, {
 			radius: params.radius,
-			radialSegments: params.radialSegments
+			radialSegments: params.radialSegments,
+			generateFlatStartCap: params.startCap,
+			generateFlatEndCap: params.endCap
 		});
 	});
 	gui.add(params, 'progress').min(0).max(1).step(0.01).listen().onChange(function() {
 		geometry.update(pathPointList, {
 			radius: params.radius,
 			radialSegments: params.radialSegments,
-			progress: params.progress
+			progress: params.progress,
+			generateFlatStartCap: params.startCap,
+			generateFlatEndCap: params.endCap
 		});
 	});
 	gui.add(params, 'playSpeed').min(0.01).max(0.2);
@@ -106,14 +130,18 @@ window.onload = function() {
 		pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
 		geometry.update(pathPointList, {
 			radius: params.radius,
-			radialSegments: params.radialSegments
+			radialSegments: params.radialSegments,
+			generateFlatStartCap: params.startCap,
+			generateFlatEndCap: params.endCap
 		});
 	});
 	gui.add(params, 'cornerSplit').min(0).max(30).step(1).onChange(function(val) {
 		pathPointList.set(points, params.cornerRadius, params.cornerSplit, false);
 		geometry.update(pathPointList, {
 			radius: params.radius,
-			radialSegments: params.radialSegments
+			radialSegments: params.radialSegments,
+			generateFlatStartCap: params.startCap,
+			generateFlatEndCap: params.endCap
 		});
 	});
 
@@ -141,7 +169,9 @@ window.onload = function() {
 			geometry.update(pathPointList, {
 				radius: params.radius,
 				radialSegments: params.radialSegments,
-				progress: params.progress
+				progress: params.progress,
+				generateFlatStartCap: params.startCap,
+				generateFlatEndCap: params.endCap
 			});
 		}
 
