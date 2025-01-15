@@ -1,3 +1,7 @@
+import * as THREE from 'three';
+import * as BufferGeometryUtils from './libs/BufferGeometryUtils.js';
+import { PathPointList, PathGeometry } from '../../build/three.path.module.js';
+
 /**
  * City Builder
  * @param {Object} params
@@ -102,7 +106,7 @@ City.prototype = Object.assign(City.prototype, {
 				points.push(new THREE.Vector3(-halfAreaSize - offset, 0, -halfAreaSize - offset));
 			}
 
-			const pathPointList = new THREE.PathPointList();
+			const pathPointList = new PathPointList();
 			pathPointList.set(points, 0, 0, new THREE.Vector3(0, 1, 0));
 
 			const updateParam = {
@@ -111,7 +115,7 @@ City.prototype = Object.assign(City.prototype, {
 				progress: 0
 			};
 
-			const geometry = new THREE.PathGeometry({
+			const geometry = new PathGeometry({
 				pathPointList: pathPointList,
 				options: updateParam
 			});
@@ -120,8 +124,6 @@ City.prototype = Object.assign(City.prototype, {
 
 			geometries.push(geometry);
 		}
-
-		console.log(geometries);
 
 		return geometries;
 	},
@@ -182,13 +184,13 @@ City.prototype = Object.assign(City.prototype, {
 				const _x = (Math.random() - 0.5) * 2 * xDividedBy3;
 				const _z = (Math.random() - 0.5) * 2 * zDividedBy3;
 
-				const _geometry = new THREE.BoxBufferGeometry(_w1, _height, _w2);
+				const _geometry = new THREE.BoxGeometry(_w1, _height, _w2);
 				_geometry.translate(_x, _height / 2, _z);
 
 				array.push(_geometry);
 			}
 
-			const geometry = THREE.BufferGeometryUtils.mergeBufferGeometries(array);
+			const geometry = BufferGeometryUtils.mergeGeometries(array);
 			geometry.computeBoundingBox();
 			geometry.computeBoundingSphere();
 
@@ -203,3 +205,5 @@ City.prototype = Object.assign(City.prototype, {
 		return group;
 	}
 });
+
+export { City };

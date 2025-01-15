@@ -1,3 +1,8 @@
+import * as THREE from 'three';
+import { OrbitControls } from './libs/OrbitControls.js';
+import { City } from './City.js';
+
+
 window.onload = function() {
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0, 0, 0);
@@ -9,14 +14,12 @@ window.onload = function() {
 	renderer.setPixelRatio(window.devicePixelRatio);
 	document.body.appendChild(renderer.domElement);
 
-	const controls = new THREE.OrbitControls(camera, renderer.domElement);
-	controls.enableDamping = true;
-	controls.rotateSpeed = 0.1;
-	controls.dampingFactor = 0.1;
+	const controls = new OrbitControls(camera, renderer.domElement);
 
 	const texture = new THREE.TextureLoader().load('./images/path_007_19.png', function(texture) {
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		texture.anisotropy = 16;
+		texture.colorSpace = THREE.SRGBColorSpace;
 	});
 
 	const city = new City({

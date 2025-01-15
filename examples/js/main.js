@@ -1,3 +1,8 @@
+import * as THREE from 'three';
+import { OrbitControls } from './libs/OrbitControls.js';
+import { PathGeometry } from '../../build/three.path.module.js';
+import { Path3D } from './Path3D.js';
+
 window.onload = function() {
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0.3, 0.3, 0.3);
@@ -12,7 +17,7 @@ window.onload = function() {
 	renderer.domElement.addEventListener('mousedown', onMouseDown, false);
 	renderer.domElement.addEventListener('mousemove', onMouseMove, false);
 
-	const controls = new THREE.OrbitControls(camera, renderer.domElement);
+	const controls = new OrbitControls(camera, renderer.domElement);
 
 	const groundGroup = new THREE.Group();
 
@@ -35,7 +40,7 @@ window.onload = function() {
 	const ambientLight = new THREE.AmbientLight(0xffffff);
 	scene.add(ambientLight);
 
-	const directionalLight = new THREE.DirectionalLight(0xffffff);
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
 	directionalLight.position.set(2, 2, -3);
 	directionalLight.position.normalize();
 	scene.add(directionalLight);
@@ -47,7 +52,7 @@ window.onload = function() {
 	this.fixRadius = 0.5; // fixRadius should larger than cornerRadius
 	this.height = 0.1;
 
-	const geometry = new THREE.PathGeometry(128);
+	const geometry = new PathGeometry(128);
 
 	const textureMap = new Map();
 	function getTexture(url) {
@@ -57,6 +62,7 @@ window.onload = function() {
 			const texture = new THREE.TextureLoader().load(url, function(texture) {
 				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 				texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+				texture.colorSpace = THREE.SRGBColorSpace;
 			});
 			textureMap.set(url, texture);
 		}

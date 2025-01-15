@@ -1,3 +1,7 @@
+import * as THREE from 'three';
+import { OrbitControls } from './libs/OrbitControls.js';
+import { PathPointList, PathTubeGeometry } from '../../build/three.path.module.js';
+
 window.onload = function() {
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0.3, 0.3, 0.3);
@@ -9,13 +13,13 @@ window.onload = function() {
 	renderer.setPixelRatio(window.devicePixelRatio);
 	document.body.appendChild(renderer.domElement);
 
-	const controls = new THREE.OrbitControls(camera, renderer.domElement);
+	const controls = new OrbitControls(camera, renderer.domElement);
 	controls.target.set(5, -5, 5);
 
 	const ambientLight = new THREE.AmbientLight(0xffffff);
 	scene.add(ambientLight);
 
-	const directionalLight = new THREE.DirectionalLight(0xffffff);
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
 	directionalLight.position.set(2, 2, -3);
 	directionalLight.position.normalize();
 	scene.add(directionalLight);
@@ -39,12 +43,12 @@ window.onload = function() {
 	}
 
 	// create PathPointList
-	const pathPointList = new THREE.PathPointList();
+	const pathPointList = new PathPointList();
 	pathPointList.set(points, 0.3, 10, false);
 
 	// create geometry
 	const radius = 0.2;
-	const geometry = new THREE.PathTubeGeometry({
+	const geometry = new PathTubeGeometry({
 		pathPointList: pathPointList,
 		options: { radius: radius },
 		usage: THREE.DynamicDrawUsage
@@ -53,6 +57,7 @@ window.onload = function() {
 	const texture = new THREE.TextureLoader().load('images/diffuse.jpg', function(texture) {
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+		texture.colorSpace = THREE.SRGBColorSpace;
 	});
 
 	const material = new THREE.MeshPhongMaterial({

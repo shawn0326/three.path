@@ -31,13 +31,21 @@
     </div>
 </body>
 
-<script src="js/libs/three.js"></script>
-<script src="js/libs/OrbitControls.js"></script>
+<script type="importmap">
+    {
+        "imports": {
+            "three": "./js/libs/three.module.js"
+        }
+    }
+</script>
+
 <script src="js/libs/dat.gui.min.js"></script>
 
-<script src="../build/three.path.js"></script>
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from './js/libs/OrbitControls.js';
+    import { PathPointList, PathGeometry } from '../build/three.path.module.js';
 
-<script>
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0.3, 0.3, 0.3);
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, .1, 1000);
@@ -48,50 +56,51 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
 
     const ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
     directionalLight.position.set(2, 2, -3);
     directionalLight.position.normalize();
     scene.add(directionalLight);
 
     // random vector3 points
     const points = [
-	new THREE.Vector3(-5, 0, 5),
-	new THREE.Vector3(-5, 0, -5),
-	new THREE.Vector3(5, 0, -5),
-	new THREE.Vector3(5, 0, 5)
-];
+    	new THREE.Vector3(-5, 0, 5),
+    	new THREE.Vector3(-5, 0, -5),
+    	new THREE.Vector3(5, 0, -5),
+    	new THREE.Vector3(5, 0, 5)
+    ];
 
     const up = new THREE.Vector3(0, 1, 0);
 
     // create PathPointList
-    const pathPointList = new THREE.PathPointList();
+    const pathPointList = new PathPointList();
     pathPointList.set(points, 0.3, 10, up, true);
 
     // create geometry
     const width = 0.2;
-    const geometry = new THREE.PathGeometry();
+    const geometry = new PathGeometry();
     geometry.update(pathPointList, {
     	width: width
     });
 
     const texture = new THREE.TextureLoader().load('images/diffuse.jpg', function(texture) {
-	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-});
+    	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    	texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    	texture.colorSpace = THREE.SRGBColorSpace;
+    });
 
     const material = new THREE.MeshPhongMaterial({
-	color: 0x58DEDE,
-	depthWrite: true,
-	transparent: true,
-	opacity: 0.9,
-	side: THREE.FrontSide
-});
+    	color: 0x58DEDE,
+    	depthWrite: true,
+    	transparent: true,
+    	opacity: 0.9,
+    	side: THREE.FrontSide
+    });
     material.map = texture;
     
     const mesh = new THREE.Mesh(geometry, material);

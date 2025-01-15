@@ -31,15 +31,17 @@
     </div>
 </body>
 
-<script src="js/libs/three.js"></script>
-<script src="js/libs/BufferGeometryUtils.js"></script>
-<script src="js/libs/OrbitControls.js"></script>
+<script type="importmap">
+    {
+        "imports": {
+            "three": "./js/libs/three.module.js"
+        }
+    }
+</script>
+
 <script src="js/libs/dat.gui.min.js"></script>
 <script src="js/libs/stats.min.js"></script>
 
-<script src="../build/three.path.js"></script>
-
-<script src="js/City.js"></script>
-<script src="js/city_main.js"></script>
+<script type="module" src="js/city_main.js"></script>
 
 </html>
